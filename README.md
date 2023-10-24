@@ -1,4 +1,15 @@
 # CesiumExampleCollection
+
+学习合集：
+
+[WebGL & Cesium & Three_最凶残的小海豹的博客-CSDN博客](https://blog.csdn.net/qq_17627195/category_10497062_2.html)
+
+[cesium entity 和primitive 绘制对象 primitive合并 但是有不同的外观 - 点击领取 (dianjilingqu.com)](https://www.dianjilingqu.com/199198.html)
+
+[Gis - 随笔分类 - 3D入魔 - 博客园 (cnblogs.com)](https://www.cnblogs.com/mazhenyu/category/307919.html?page=1)
+
+[FreeGIS.org](http://www.freegis.org/)
+
 Cesium框架的示例集合
 
 ## 搭建环境
@@ -10,13 +21,21 @@ Cesium框架的示例集合
 - 在 public 文件夹中创建 lib 文件夹，在其中拷贝一份 cesium 库文件。
 - 替换 src 文件夹。
 
-
+[教程 - 在 Vue3+Ts 中引入 CesiumJS 的最佳实践@2023 - 知乎 (zhihu.com)](https://zhuanlan.zhihu.com/p/620468046)
 
 ## 重要类
 
 着重关心：地球，时间轴控件，各类实体以及他们的样式变化。对应到代码中就是
 
-### Viewer
+### Viewer 目录
+
+#### cesiumWidget
+
+#### dataSourceDisplay
+
+#### 其他 UI 组件
+
+
 
 但凡创建任何一个三维窗口可能都逃脱不了Viewer类的使用。Viewer基本上也就代表这一个Cesium的**三维窗口的所有**（有待理解）。因此我们首先介绍一些Viewer的组成。当我们使用 `var viewer = new Cesium.Viewer('cesiumContainer');` 创建一个三维窗口以后，它的内部是怎样组成的呢？请看下图：
 
@@ -24,13 +43,19 @@ Cesium框架的示例集合
 
 可以看到viewer其实就是一堆UI的组合。
 
+1. cesiumWidget
+
 最顶上的**cesiumWidget**是核心的三维窗口所在。这里面不仅仅包含创建三维窗口所需要的canvas、还有scene用来管理三维场景中的所有三维对象。其中的一个异类可能就是用来表示时间的clock了，因为这玩意儿和窗口真没啥关系。
+
+2. 其他UI组件
 
 最下方的**其他UI组件**包含了各种按钮、时间轴等UI组件。这些UI组件都是Cesium为我们预先创建好的，可以直接进行交互调用的工具。它们纯粹就是div的堆叠，当然内部会调用一些改变三维场景的命令，从而影响着三维窗口的显示内容。
 
+3. dataSourceDisplay
+
 可以看到Viewer类几乎都是这些UI的组合，当然唯一例外的是中间的**dataSourceDisplay**，这是viewer向三维场景中添加三维对象的接口。刚才已经说了，scene是管理三维场景中的对象的。那么它和这个datasourceDisplay是否会有冲突？答案是否定的。datasourceDisplay所做的事情就是把外部数据资源，比如kml、geojson、各种内部的几何体转化成scene能识别的三维场景对象，再通过内部一些命令，加入到scene当中去的。所以可以说，dataSourceDisplay中管理的对象，实际上和scene中的一些对象是对应的关系。但是它再将三维场景对象加入scene中去以后，还是会继续管理这些对象。比如您在dataSourceDisplay中删除某些对象以后，scene当中的某些对象也会被删除掉。
 
-说到**dataSourceDisplay**，或许初学者会有点儿陌生。但是说到viewer.entities，可能大家都很熟悉了。实际上我们平常通过viewer.entities加入到场景中的各种对象，等同于加入到dataSourceDisplay当中。这话怎么说呢？请看下图：
+说到 **dataSourceDisplay**，或许初学者会有点儿陌生。但是说到viewer.entities，可能大家都很熟悉了。实际上我们平常通过viewer.entities加入到场景中的各种对象，等同于加入到dataSourceDisplay当中。这话怎么说呢？请看下图：
 
 ![img](https://pic4.zhimg.com/v2-1a122e8549f376a7834f28dd8b46cd3b_b.jpg)
 
@@ -44,7 +69,7 @@ dataSourceDisplay实际上内部管理着一堆dataSource对象，其中有一�
 
 ![img](https://pic3.zhimg.com/v2-ec5c22b9b876d936c239de1d144fbf56_b.jpg)
 
-这里的GeoJsonDataSource、KmlDataSource、CzmlDataSource相当于可以引用外部资源，然后自己内部自动转换成一个一个的entity，不需要我们做特殊的操作。当然我们也可以做一些适当的修改，Cesium的Sandcastle中有相应的示例。
+这里的GeoJsonDataSource、KmlDataSource、CzmlDataSource相当于可以引用外部资源，然后自己内部**自动转换**成一个一个的entity，不需要我们做特殊的操作。当然我们也可以 借助返回的 Promise 来对这些 entity 做一些适当的 **修改** ，Cesium的Sandcastle中有相应的示例。
 
 Entity表示一个实体对象，准确的讲，应该是一个可以随时间动态变化的实体对象。为什么这样说呢？Cesium为了让Entity能够赋予时间的动态特性，把其属性都仔细设计了一番，特别引入了Property这个类。比如position本来用经纬度表示一下就ok了，结果现在它被设计成Property 类型。好处是这个Property可以记录某某时间段在某个位置，然后另外一个时间段，则在另外一个位置。也就是说position这个Property已不单纯指表示某个位置了，被赋予了时间的动态特性，内部的结构可以很复杂，不同的时间在不同的位置。
 
@@ -523,6 +548,8 @@ blueBox.billboard = {
 
 与 Widgets 组件类中的 BaseLayerPicker
 
+
+
 ### Viewer创建中指定
 
 ```js
@@ -537,7 +564,7 @@ this.map = new Viewer(withKeyId, {
 
 ### 后续添加
 
-
+这个记录全是错的，因为我忘记加底图地址😂
 
 记录：
 
@@ -558,3 +585,412 @@ this.map = new Viewer(withKeyId, {
    2. 没有 Ion 配置，不可使用 BaseLayerPicker 中的 Cesium Ion 组中的数据源，且在首屏时不显示地球但显示星空。
    3. 总结：需要注意 BaseLayerPicker 组件如何修改，后面需要对其改写配置。
 3. 
+
+
+
+## 载入GeoJson-GeoJsonDataSource 
+
+需要配合 axios 来得到 json 文件。那么要先书写 axios 相关的逻辑代码。
+
+相关文件 `http.ts  code.ts  @/utils/format`
+
+- 在 http.ts 和 env.d.ts配置一个 `readonly VITE_API_BASEURL: string;` 什么意思？
+
+  - 在 vite.config.ts 中配置一个 `base: viteEnv.VITE_BASE,` 这个配置base配置项可以让打包后的 index.html 中 href="/index.f6170881.css" --> href="./index.f6170881.css" 那么对于 development 模式无影响吗？
+  - 但是我配置了 vite 中的代理服务器 且 在.env总加了 `VITE_API_BASEURL =  '/api'`后就可以了。解释在代码注释中。
+
+- ```JS
+  // 简略版
+  Cesium.Viewer.dataSources.add(
+    // 使用 静态方法  
+      Cesium.GeoJsonDataSource.load(data, {
+                  stroke: Cesium.Color.HOTPINK,
+                  fill: Cesium.Color.fromAlpha(Color.RED, 0.3),
+                  strokeWidth: 3
+  	})
+  );
+  ```
+
+### ✅总结用法
+
+为了在界面上显示 GeoJson 文件所存储的地理信息，需要以下几步（会有失偏颇）：
+
+1. 获取当前 Cesium 实例的 Viewer，例如  ` const viewer = new Cesium.Viewer('cesiumContainer'); `
+
+2. 准备一个 GeoJsonDataSource 实例（Source）。`const g = new GeoJsonDataSource('itsName');`
+
+3. 使用 load 方法或者 process 方法为该 GeoJsonDataSource 提供数据源。
+
+   ```JS
+   g.process('./src/components/Map/data.json', styleOptions || { 
+   		stroke: Color.HOTPINK,
+   		fill: Color.fromAlpha(Color.RED, 0.5),
+   		strokeWidth: 3
+   	}
+   )
+   ```
+
+4. 在 viewer 中添加该 GeoJsonDataSource 实例。`viewer.dataSources.add(g);`
+
+### 📌注意
+
+- Cesium.GeoJsonDataSource.load(data, options) 是该类的静态方法，用于简写罢了。
+
+  - 源码中是这样的：
+
+    ```js
+    GeoJsonDataSource.load = function (data, options) {
+      return new GeoJsonDataSource().load(data, options);
+    };
+    ```
+
+- load(data, options) → Promise. 意义与上面的静态方法一样。重复使用会覆盖原来的数据。
+
+  - 源码
+
+    ```JS
+    GeoJsonDataSource.prototype.load = function (data, options) {
+      return preload(this, data, options, true);
+    };
+    ```
+
+- process(data, options) → Promise 
+
+  - 源码
+
+    ```JS
+    GeoJsonDataSource.prototype.process = function (data, options) {
+      return preload(this, data, options, false);
+    };
+    ```
+
+- 通过上面的三个 API 可以看出都是使用了 preload 方法，不过在该类中不暴露出来。
+
+  - https://github.com/CesiumGS/cesium/blob/1.110/packages/engine/Source/DataSources/GeoJsonDataSource.js#L909
+  - 其中有一个`clear` 是一个布尔值，用于指定是否在加载新数据之前清除之前的数据。load 和 process 的参数区别在这。
+
+
+
+### ❓
+
+其实我还是有很多疑问：
+
+- 有几种Source，和 dataSourceDisplay 有关系吗？我如何查阅 geojson 加载到哪个实例中，是 GeoJsonDataSource 实例中吗，还是说被安排在其他某个地方？使用 process 加载到同一个 GeoJsonDataSource 实例中会不会不太好？
+
+- 下面的代码预期是只有第一个 process 的数据会有高度，但是实际结果是两个都拉升了。
+
+```JS
+            g.process('./src/components/Map/data.json', styleOptions || {
+                stroke: Color.HOTPINK,
+                fill: Color.fromAlpha(Color.RED, 0.5),
+                strokeWidth: 3
+            })
+            .then((e)=>{
+                // this.viewer.dataSources.add(e);
+                let entities = e.entities.values;
+                for (let i = 0; i < entities.length; i++) {
+                    // entity[i].polygon.outline = false;
+                    entities[i].polygon.extrudedHeight = 1000;
+                }
+            })
+            g.process(data, styleOptions || {
+                stroke: Color.GREEN,
+                fill: Color.fromAlpha(Color.GREEN, 0.5),
+                strokeWidth: 3
+            })
+
+            this.viewer.dataSources.add(g);
+```
+
+解释：异步加载问题。先加载的 第二个 ，后加载的第一个 😂。因为data是已经加载好了的数据。
+
+- 为什么  GeoJsonDataSource 实例中 name 为 itsName， 但是控制台打印的 显示为 data2.json？？？？
+
+## 键鼠事件
+
+Cesium 拾取有多个方法，下面就分别说明一下几种常用方法都是做什么用的，在什么场景下使用。
+
+1. **viewer.scene.pick** ✅
+
+通过坐标位置，拾取 Entity 、 Primitive、3D-Tiles（Cesium3DTileFeature）对象。例如获取 Entity ，通过position（坐标位置）获取到 pick 对象，通过pick.id即可拾取当前的entity对象。	`var pick = viewer.scene.pick(position);`
+
+注意： scene.pick 只能获取一个对象，并且获取的是最顶部的对象。如果拾取点没有对象，则为undefined
+
+使用场景： viewer.scene.pick 主要是用来拾取 Entity 、 Primitive、3D-Tiles。拾取后，可以用于**改变对象的属性参数**。
+
+示例代码： 点击获取图标，修改图标的图片
+
+```js
+var handler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
+// 设置左键点击事件
+handler.setInputAction(function (event) {
+  // 获取 pick 拾取对象
+  var pick = viewer.scene.pick(event.position);
+  // 判断是否获取到了 pick 
+  if (Cesium.defined(pick)) {
+    // 修改拾取到的entity的样式
+    pick.id.billboard.image = "xxx.png"
+  }
+}, Cesium.ScreenSpaceEventType.LEFT_CLICK);
+```
+
+
+
+2. **viewer.scene.pickPosition**
+
+主要是用于拾取对应位置的世界坐标，例如：拾取点击模型表面的坐标。
+
+注意： 一定要开启深度检测（`viewer.scene.globe.depthTestAgainstTerrain = true;`），否则在没有3dTile模型的情况下，会出现空间坐标不准的问题，如果不开启深度检测，只能在3dTile模型上获取准确的空间坐标。
+
+使用场景： 适用于模型表面位置的选取，拾取三维物体的坐标等。
+
+示例
+
+```js
+var handler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
+handler.setInputAction(function (event) {
+     var position = viewer.scene.pickPosition(event.position);
+     console.log("获取到的坐标：", positionposition);
+}, Cesium.ScreenSpaceEventType.LEFT_CLICK);
+```
+
+
+
+
+3. **viewer.scene.drillPick** ✅
+
+可以理解为**穿透拾取**，是从当前拾取位置获取所有对象的对象列表（entity的集合），列表按其在场景中的视觉顺序（从前到后）排序（通过for循环可以获取当前坐标下的所有entity）。
+
+注意： drillPick 和 Pick 不同，Pick 只能拾取一个对象，而 drillPick 可以拾取多个对象，并且 drillPick 可以设置 limit 参数，limit 参数可以控制获取几个对象，超出的就不获取了。
+
+使用场景： 适用于多个对象重叠在一个位置，并且要获取到多个对象的情况。
+
+示例
+
+```js
+var handler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
+handler.setInputAction(function (event) {
+	var pickedObjects = scene.drillPick(event.position);
+	// pickedObjects 使用for循环 可以拿到所有entity
+}, Cesium.ScreenSpaceEventType.LEFT_CLICK);
+```
+
+
+
+
+4. **viewer.scene.globe.pick**
+
+找到射线与渲染的地球表面之间的交点（射线必须以世界坐标给出），返回的是世界坐标。一般用来获取加载地形后的经纬度和高程。
+
+注意： 一定要开启深度检测（viewer.scene.globe.depthTestAgainstTerrain = true;）
+
+使用场景： 一般用于获取点击处地球表面的世界坐标（有地形），注意：不包括模型、倾斜摄影表面。
+
+示例
+
+```js
+var handler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
+handler.setInputAction(function (event) {
+     var ray = viewer.camera.getPickRay(event.position);
+     var position = viewer.scene.globe.pick(ray, viewer.scene);
+     console.log("获取到的坐标：", position);
+}, Cesium.ScreenSpaceEventType.LEFT_CLICK);
+```
+
+
+
+
+5. **viewer.scene.camera.pickEllipsoid**
+
+通过一个必选的屏幕坐标，获取椭圆球体表面的一个Cartesian3坐标。适用于裸球表面的选取，是基于数学模型的椭圆球体。
+
+注意： pickEllipsoid在加载地形的情况下有误差，地形凹凸程度越大，误差越大，所以不要用来获取有地形的坐标。
+
+使用场景： 主要用于获取椭球面的位置。
+
+示例
+
+```js
+var handler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
+handler.setInputAction(function (event) {
+     var position = viewer.scene.camera.pickEllipsoid(event.position, viewer.scene.globe.ellipsoid);
+     console.log("获取到的坐标：", position);
+}, Cesium.ScreenSpaceEventType.LEFT_CLICK);
+```
+
+
+
+参考文档：
+
+[Cesium 点击获取/拾取（PICK）的不同用法_cesium 拾取_最凶残的小海豹的博客-CSDN博客](https://blog.csdn.net/qq_17627195/article/details/128632055)
+
+https://www.cnblogs.com/airduce/p/14663927.html
+
+[Cesium 各类键鼠事件](https://blog.csdn.net/qq_17627195/article/details/115182672)
+
+[90 cesium的四种点击拾取方法 矩阵变换 本地坐标转世界 禁止场景/鼠标左右拖动、禁用中键 修改点击infoBox内容 3Dtile性能优化 cesium+vue_cesium 拾取点_smallcelebration的博客-CSDN博客](https://blog.csdn.net/samllucky/article/details/131124401)
+
+[Cesium 拾取 API ，按拾取物体来分类总结](https://www.cnblogs.com/onsummer/p/14958196.html)
+
+[Cesium：四种拾取pick 以及原理(cha138.com)](https://it.cha138.com/python/show-5089330.html)
+
+### 按拾取对象分类
+
+#### 拾取坐标
+
+1. 仅拾取椭球体表面坐标 pickEllipsoid
+
+使用 `Camera.prototype.pickEllipsoid` 方法，接受一个必选的屏幕坐标，返回一个三维世界坐标 `Cartesian3`。
+
+2. 拾取带地形高度的地表坐标
+
+使用 `Globe.prototype.pick` 方法。需要事先使用 `Camera.prototype.getPickRay` 创建射线。接受一个必选的射线对象，一个必选的 `Scene` 对象，返回一个三维世界坐标 `Cartesian3`。
+
+3. 拾取三维物体的坐标
+
+使用 `Scene.prototype.pickPosition` 方法。
+
+> 拓展阅读
+> `Scene.prototype.pickPositionSupported`，只读字段，表示当前 Scene 是否支持拾取坐标
+> `Scene.prototype.pickTranslucentDepth`，Boolean 类型字段，使用它的前提是设置 `Scene.prototype.useDepthPicking` 为 true，这个 **会增加性能消耗**，来判断透明物体的深度
+
+#### 拾取三维物体
+
+#### 拾取 Entity 和 Primitive（包括 3D-Tiles）
+
+使用 `Scene.prototype.pick` 方法，返回一个对象：
+
+```bash
+{
+  primitive: Primitive | GroundPrimitive | Cesium3DTileContent | ...
+  id?: Entity
+}
+```
+
+若拾取到的是 Entity，那么返回的对象的 id 字段将为此 Entity，否则为 undefined.
+
+还有一个 `Scene.prototype.drillPick`，穿透拾取的意思，与 pick 的区别就是能拾取多个点击点的三维物体。
+
+#### 拾取 DataSource 加载的数据
+
+一样通过 `Scene.prototype.pick` 和 `drillPick` 方法拾取，接受二维屏幕坐标 `Cartesian2`。
+
+#### 拾取图层
+
+这个功能正在推进，届时可能在 1.84 版本的 Cesium 会加入拾取图层的功能。
+API 或为 `ImageryLayerCollection.prototype.pickImageryLayers`，参数同 `Globe.prototype.pick`，也是射线求交的一种，返回一个 `ImageryLayerCollection` 或 undefined.
+
+#### 原理
+
+在 Cesium 的场景组织中，有那么几个容器构成了三维世界：
+
+Scene：包括了 Globe，除了 Globe 的元素外，还加上了 Primitive、Entity、DataSource 等三维物件
+Globe：包括了 Ellipsoid，还包括了所有的影像图层、地形瓦片，可以算是椭球体上面的皮肤
+Ellipsoid：一个数学公式所定义的旋转椭球体，代表一个纯粹的地球椭球形状
+
+所以，针对不同的容器，就有不同的拾取。
+
+#### 拾取不准确的问题：开启深度检测
+
+`Scene.prototype.pickPosition`、`Scene.prototype.pick` 和 `Globe.prototype.pickRay` 的准确性受深度缓存影响，所以，在深度检测不开启时，拾取的坐标会不准确。
+
+建议开启。
+
+
+
+## 场景触发事件
+
+场景中一些变化触发的监听事件，随着Cesium中一些对象实例化而产生的事件。常用的场景触发事件有：
+
+- Camera.changed：相机发生变化时触发
+- Camera.moveEnd：相机停止移动时触发
+- Camera.moveStart：相机开始移动时触发
+- Scene.preUpdate：场景更新之前触发
+- Scene.postUpdate：场景更新之后立即触发
+- Scene.preRender：场景更新之后渲染之前触发
+- Scene.postRender：场景渲染之后触发
+- Scene.terrainProviderChanged：地形提供器发生变化时触发
+- Viewer.trackedEntityChanged：entity的属性发生变化时触发
+- Cesium3DTileset.allTilesLoaded：所有3dtiles数据加载完成以后触发
+- Cesium3DTileset.loadProgress：3dtiles初始化加载过程中触发
+- Cesium3DTileset.tileFailed：3dtiles瓦片加载失败时触发
+- Globe.imageryLayersUpdatedEvent：地球加载图层更新时触发
+
+```JS
+// 需要回调的函数 
+function callbackFunc(event){
+    cosnole.log(event)
+}
+// 渲染之前执行
+viewer.scene.preRender.addEventListener(callbackFunc);
+viewer.scene.preRender.removeEventListener(callbackFunc);
+ 
+// 更新之前执行
+viewer.scene.preUpdate.addEventListener(callbackFunc);
+viewer.scene.preUpdate.removeEventListener(callbackFunc);
+ 
+// 实时渲染执行
+viewer.scene.postRender.addEventListener(callbackFunc);
+viewer.scene.postRender.removeEventListener(callbackFunc);
+ 
+// 实时更新执行
+viewer.scene.postUpdate.addEventListener(callbackFunc);
+viewer.scene.postUpdate.removeEventListener(callbackFunc);
+```
+
+
+
+## dataSourceDisplay，entity，dataSource
+
+dataSourceDisplay 是对数据进行处理的一类 API ，entity 表示的是处理完的数据在 Cesium 中的一个个实体或者自定义的实体。dataSource 是泛指 GeoJsonDataSource 等这类数据或者 Wall 这类自定义实体，当然也有这个 API ，不过一般作为 定义数据源的接口，该接口将任意数据转换为EntityCollection以供一般使用。该对象是用于文档目的的接口，不建议直接实例化来使用。
+
+### 分类
+
+学习新事物，分类是帮助我们构建体系最好的方法。
+
+#### dataSourceDisplay
+
+成员：
+
+- dataSources : [DataSourceCollection](https://cesium.com/learn/cesiumjs/ref-doc/DataSourceCollection.html)  一个容器，用于存放 dataSource 实例。
+- defaultDataSource : [CustomDataSource](https://cesium.com/learn/cesiumjs/ref-doc/CustomDataSource.html)  接口类型为 new Cesium.CustomDataSource(name)。一种 dataSource 的实现类型，可用于手动管理一组实体。
+- ready  只读，指示数据源中的所有实体是否就绪。
+- scence  略
+
+例子：
+
+```javascript
+// 1. 实例化一种 dataSource 类型，这里实例化 CustomDataSource ；
+const dataSource = new Cesium.CustomDataSource('myData');
+// 2. 实例化的 CustomDataSource 中添加一个 entity ；
+const entity = dataSource.entities.add({
+   position : Cesium.Cartesian3.fromDegrees(1, 2, 0),
+   billboard : {
+       image : 'image.png'
+   }
+});
+// 3. 实例化的 CustomDataSource 添加到 实例化的 dataSources 中（使用的是实例化的 dataSources 的 add 方法）。
+viewer.dataSources.add(dataSource);
+```
+
+
+
+#### entity
+
+
+
+
+
+
+
+
+
+
+
+
+
+## tips
+
+>带有透明度的颜色的图层叠加后是会让颜色也叠加的
+
+> 在vue组件的setup中得到 window 中自定义属性会出现 undefined ，但是在 onmounted 钩子中 读取该属性则正常？？？？？

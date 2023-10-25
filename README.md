@@ -634,7 +634,7 @@ this.map = new Viewer(withKeyId, {
 
 ### 📌注意
 
-- Cesium.GeoJsonDataSource.load(data, options) 是该类的静态方法，用于简写罢了。
+- Cesium.GeoJsonDataSource.load(data, options) 是该类的静态方法，用于简写。
 
   - 源码中是这样的：
 
@@ -977,9 +977,64 @@ viewer.dataSources.add(dataSource);
 
 #### entity
 
+成员：
+
+- 不 一 一 列举了。
+
+方法：
+
+- 几乎都是用来控制实体的属性之类的方法
 
 
 
+**对比 entity， entities ，EntityCollecton，EntityCluster：**
+
+entity 是一个类，可以实例化的对象，实例后的对象被赋予一些属性表现出不同的 “ 性状 ” ，即空间对象可视化，需要给定对象的空间位置和显示样式。 
+
+entities 作为 某个实例化对象的 属性名 例如 `viewer.entities`，一般为 EntityCollecton 。
+
+EntityCollecton 是 entity 容器，可以放置多个 entity 实例，也提供了`add、remove、removeAll`等等接口来管理场景中的entity。
+
+EntityCluster 是Cesium中的实体聚合类，用于对多个实体 **Billboard**、**Label** 、**Point** 进行聚合和分组，以便更好地管理和控制它们。EntityCluster可以帮助您组织和优化您的场景，并为用户提供更好的交互体验。https://sandcastle.cesium.com/index.html?src=Clustering.html
+
+例子：
+
+```jsx
+      const anEntity = new Entity({
+            id:'obj_id_110',
+            position:Cesium.Cartesian3.fromDegrees(103.0, 40.0),
+            name:'Red ellipse on surface with outline',
+            ellipse:{
+                semiMinorAxis:250000.0,
+                semiMajorAxis:400000.0,
+                height:200000.0,
+                extrudedHeight:400000.0,
+                fill:true,
+                material:Cesium.Color.RED.withAlpha(0.5),
+                outline:true, //必须设置height，否则ouline无法显示
+                outlineColor:Cesium.Color.BLUE.withAlpha(0.5),
+                outlineWidth:10.0//windows系统下不能设置固定为1
+            }
+        });
+		
+		viewer.entities.add(anEntity);
+ 
+        varhandler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
+        handler.setInputAction(function(movement) {
+            varpick = viewer.scene.pick(movement.position);
+            if(Cesium.defined(pick) && (pick.id.id === 'obj_id_110')) {
+                alert('picked!');
+            }
+        },Cesium.ScreenSpaceEventType.LEFT_CLICK);
+```
+
+给定 **空间位置和显示样式** 创建 entity ，使用 add 方法添加到 EntityCollecton 实现场景中 entity 的管理，并借助ScreenSpaceEventHandler 实现场景中 entity 的拾取。
+
+✅高级功能实现
+
+动态更新：Entity支持实时动态更新，可以通过设置位置、方向等属性的回调函数来实现地理实体的实时更新。这样，我们可以根据实时数据或交互操作来改变实体的状态，从而实现实时演示、动画效果等。需要借助 Property 实现。
+
+扩展与自定义：通过继承Entity类，我们可以扩展和自定义实体的功能。可以通过添加新的属性、方法和事件处理函数，来满足特定需求或实现定制化的地理实体。**?????**
 
 
 
@@ -994,3 +1049,5 @@ viewer.dataSources.add(dataSource);
 >带有透明度的颜色的图层叠加后是会让颜色也叠加的
 
 > 在vue组件的setup中得到 window 中自定义属性会出现 undefined ，但是在 onmounted 钩子中 读取该属性则正常？？？？？
+
+> 一般加载数据的方法都是异步的，而且会返回一个 Promise ，可以数据源这个 Promise 来进行更进一步的数据处理，详细可以去看 《 载入GeoJson-GeoJsonDataSource # 疑问 》

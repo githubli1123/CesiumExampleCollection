@@ -10,6 +10,10 @@
 
 [FreeGIS.org](http://www.freegis.org/)
 
+[🌟cesium_A873054267的博客-CSDN博客](https://blog.csdn.net/a873054267/category_8274147.html)
+
+[sky....._cesium,webgl,web前端-CSDN博客](https://blog.csdn.net/u013929284?type=blog)
+
 Cesium框架的示例集合
 
 ## 搭建环境
@@ -1051,3 +1055,36 @@ EntityCluster 是Cesium中的实体聚合类，用于对多个实体 **Billboard
 > 在vue组件的setup中得到 window 中自定义属性会出现 undefined ，但是在 onmounted 钩子中 读取该属性则正常？？？？？
 
 > 一般加载数据的方法都是异步的，而且会返回一个 Promise ，可以数据源这个 Promise 来进行更进一步的数据处理，详细可以去看 《 载入GeoJson-GeoJsonDataSource # 疑问 》
+
+>[Cesium通过 feature ids来操作3dtiles瓦片集中的要素 - 知乎 (zhihu.com)](https://zhuanlan.zhihu.com/p/634176703)
+>
+>[Cesium如何用射线相交排除已经交到的模型 - 我爱学习网 (5axxw.com)](https://www.5axxw.com/questions/simple/lqjph1)
+>
+>[cesium drillPick实现原理_A873054267的博客-CSDN博客](https://blog.csdn.net/A873054267/article/details/115354539)
+
+> [Cesium阴影技术_cesium shadowmap-CSDN博客](https://blog.csdn.net/u013929284/article/details/131498349)
+
+
+
+Cesium提供了射线查询功能，可用于检测与射线相交的模型。你可以将射线从相机位置向前发射，然后用射线查询功能检测在射线路径上的所有对象。如果一个对象在之前的射线路径中已经被交到过，可以通过记录已被处理的对象以及它们的位置来实现排除。
+
+具体实现可以参考以下代码：
+
+```js
+var ray = new Cesium.Ray(camera.position, camera.direction);
+var pickedObjects = scene.drillPick(ray); // 检测射线路径上的所有对象
+var intersectedPositions = []; // 记录已经交到的所有位置
+for (var i = 0; i < pickedObjects.length; ++i) {
+    var object = pickedObjects[i].primitive;
+    var position = object.position; // 获取对象的位置
+    // 如果当前位置已经被处理过，则排除当前对象
+    if (intersectedPositions.indexOf(position) !== -1) {
+        continue;
+    }
+    // 处理当前对象
+    // ...
+    intersectedPositions.push(position); // 记录已处理的位置
+}
+```
+
+在实际应用中，由于射线查询是一个相对耗时的操作，为了提高性能，可以使用空间分割算法（如八叉树）来对空间进行划分，只检测射线路径经过的空间，避免不必要的查询。

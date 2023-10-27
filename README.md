@@ -712,6 +712,8 @@ this.map = new Viewer(withKeyId, {
 
 ## 键鼠事件
 
+[Cesium 中的pick讲解_cesuim中pickposition的原理?-CSDN博客](https://blog.csdn.net/caozl1132/article/details/90257043)
+
 Cesium 拾取有多个方法，下面就分别说明一下几种常用方法都是做什么用的，在什么场景下使用。
 
 1. **viewer.scene.pick** ✅
@@ -1063,6 +1065,8 @@ EntityCluster 是Cesium中的实体聚合类，用于对多个实体 **Billboard
 >[cesium drillPick实现原理_A873054267的博客-CSDN博客](https://blog.csdn.net/A873054267/article/details/115354539)
 
 > [Cesium阴影技术_cesium shadowmap-CSDN博客](https://blog.csdn.net/u013929284/article/details/131498349)
+>
+> [Cesium 高性能扩展之DrawCommand（三）：显隐和点选 - 简书 (jianshu.com)](https://www.jianshu.com/p/cc44d0cf7429)
 
 
 

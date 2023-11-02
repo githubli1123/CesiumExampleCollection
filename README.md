@@ -991,7 +991,9 @@ viewer.dataSources.add(dataSource);
 
 - 几乎都是用来控制实体的属性之类的方法
 
+<img src="C:\Users\123\AppData\Roaming\Typora\typora-user-images\image-20231102155503923.png" alt="image-20231102155503923" style="zoom: 67%;" />
 
+[4.Cesium中实体Entity的增删改查及性能优化（超详细）-阿里云开发者社区 (aliyun.com)](https://developer.aliyun.com/article/1277178)
 
 **对比 entity， entities ，EntityCollecton，EntityCluster：**
 
@@ -1049,6 +1051,10 @@ EntityCluster 是Cesium中的实体聚合类，用于对多个实体 **Billboard
 ## 水体模型的前端展示构建流程
 
 
+
+### geojson面的高度改变
+
+[Cesium 中 entity 简单移动_cesium entity移动-CSDN博客](https://blog.csdn.net/qq_37202724/article/details/111550730)
 
 
 

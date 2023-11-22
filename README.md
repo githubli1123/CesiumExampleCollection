@@ -1066,7 +1066,7 @@ arcgis工具
 
 
 
-
+为什么 GeoJsonDataSource 实例没有 position：因为这是一个 collection ，一个 entity 的 collection 。但每个 entity 有 position ，每个 entity 有 polygon ，polygon 有 height 。
 
 
 

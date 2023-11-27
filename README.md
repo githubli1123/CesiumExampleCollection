@@ -208,7 +208,7 @@ Entity的 `box.dimensions` 类型并不是 `Cartesian3`，而是一个 `Property
 
 ![动图封面](https://pica.zhimg.com/v2-f27bbcb37047dae8ef5775f223503abb_720w.jpg?source=d16d100b)
 
-### 匀速式变长的长方体 SampledProperty
+### 📦匀速式变长的长方体 SampledProperty
 
 但是呢，如果我想让这个盒子逐渐变长，该怎么操作呢？方法是有的，就是可以不停地去修改blueBox.position，类似这样： 
 
@@ -383,7 +383,7 @@ referenceFrame是用来表示position的参考架。目前Cesium有以下两种�
 - SampledPositionProperty
 - TimeIntervalCollectionPositionProperty
 
-稍加留意，就会发现，和普通的Property相比，只是多了一个Position，所以用法上也大同小异，只不过他们是用来专门表示位置的。SampledPositionPropertySampledPositionProperty的用法，不多解释，直接看代码吧：
+稍加留意，就会发现，和普通的Property相比，只是多了一个Position，所以用法上也大同小异，只不过他们是用来专门表示位置的。SampledPositionProperty的用法，不多解释，直接看代码吧：
 
 ```JS
 var property = new Cesium.SampledPositionProperty();
@@ -465,7 +465,7 @@ colorProperty.addSample(
 blueBox.box.material = new Cesium.ColorMaterialProperty(colorProperty); 
 ```
 
-### 🌟自定义改变各种属性CallbackPropertyCallbackProperty
+### 🌟自定义改变各种属性CallbackProperty
 
 自由度最高的一种Property，让用户通过自定义，回调函数，来返回需要的值。回调函数中，用户可以使用time来给定value，也可以以自己的方式给给定。以下代码就是不通过time，自己手动调整dimension的示例。
 
@@ -1068,7 +1068,7 @@ arcgis工具
 
 为什么 GeoJsonDataSource 实例没有 position：因为这是一个 collection ，一个 entity 的 collection 。但每个 entity 有 position ，每个 entity 有 polygon ，polygon 有 height 。
 
-
+GeoJsonDataSource 实例中有 show 属性 为 true，GeoJsonDataSource 实例中的 entities 属性中也有 show 属性 为 true ，但 entities 中的 polygon 中 show 属性为 undefined 。
 
 
 

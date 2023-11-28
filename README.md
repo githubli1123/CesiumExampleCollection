@@ -4,7 +4,7 @@
 
 [WebGL & Cesium & Three_最凶残的小海豹的博客-CSDN博客](https://blog.csdn.net/qq_17627195/category_10497062_2.html)
 
-[cesium entity 和primitive 绘制对象 primitive合并 但是有不同的外观 - 点击领取 (dianjilingqu.com)](https://www.dianjilingqu.com/199198.html)
+[cesium entity 和primitive 绘制对象 primitive合并 但是有不同的外观](https://www.dianjilingqu.com/199198.html)
 
 [Gis - 随笔分类 - 3D入魔 - 博客园 (cnblogs.com)](https://www.cnblogs.com/mazhenyu/category/307919.html?page=1)
 

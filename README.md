@@ -1088,22 +1088,6 @@ GeoJsonDataSource 实例中有 show 属性 为 true，GeoJsonDataSource 实例�
 
 
 
-
-
-
-
-
-
-若依平台来搭建自己的代码示例库
-
-学习 express 框架
-
-学习java
-
-
-
-
-
 ## tips
 
 >带有透明度的颜色的图层叠加后是会让颜色也叠加的

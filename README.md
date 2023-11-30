@@ -1074,9 +1074,21 @@ GeoJsonDataSource 实例中有 show 属性 为 true，GeoJsonDataSource 实例�
 
 
 
+## Primitive 绘制一个三角形📐
 
+https://zhuanlan.zhihu.com/p/320877649
 
+[Cesium之DrawCommand与绘制三角形](https://www.cnblogs.com/jiujiubashiyi/p/17291423.html)
 
+[Cesium中的图形技术：Primitive API 高级_51CTO博客_cesium primitive](https://blog.51cto.com/u_15127586/2807885)
+
+[Cesium DrawCommand 1 ——  不谈地球 画个三角形 - 知乎 (zhihu.com)](https://zhuanlan.zhihu.com/p/506759873)
+
+[Cesium Primitive API 实践：绘制一个三角形](https://blog.csdn.net/liguoweioo/article/details/120541359)
+
+[Cesium原理篇：6 Render模块(5: VAO&RenderState&Command) - fu*k - 博客园 (cnblogs.com)](https://www.cnblogs.com/fuckgiser/p/6002210.html)
+
+[如何写一个软渲染(2)-Primitive](https://zhuanlan.zhihu.com/p/43537323)
 
 
 

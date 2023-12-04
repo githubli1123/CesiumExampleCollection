@@ -1,0 +1,86 @@
+<!--
+ * @Author: Wu Zhoujie
+ * @Date: 2023-12-04 10:43:00
+ * @LastEditTime: 2023-12-04 10:43:57
+ * @Description: 
+-->
+<body>
+    <canvas id="mycanvas" width="800" height="500"></canvas>
+    <script>
+      //获取画布
+      var canvas = document.getElementById("mycanvas");
+      //获取上下文
+      var ctx = canvas.getContext("2d");
+      // 球类
+      function Ball(x, y, r){
+        this.x = x;
+        this.y = y;
+        //半径
+        this.r = r;
+        //设置随机颜色
+        this.color = getRandom();
+        //设置行进方向
+        this.dx = parseInt(Math.random() * 10) - 5;//要让小球往四面八方，路径就需要有正有负
+        this.dy = parseInt(Math.random() * 10) - 5;
+        //每创建一个小球就放进数组
+        ballArr.push(this);
+      }
+      //彩色=随机颜色
+      function getRandom(){
+        var allType = [0,1,2,3,4,5,6,7,8,9,"a","b","c","d","e","f"];
+        var color = "#";
+        for(var i = 0; i < 6; i++){
+          var random = parseInt(Math.random() * allType.length);
+          color +=allType[random];
+        }
+        return color;
+      }
+      //canvas设置鼠标监听,鼠标移动过程中创建小球
+      canvas.addEventListener("mousemove", function(event){
+        //鼠标事件可拿到当前鼠标坐标
+        new Ball(event.offsetX, event.offsetY, 15);
+      });
+  
+      //更新
+      Ball.prototype.update = function(){
+        //小球的运动
+        this.x += this.dx;
+        this.y += this.dy;
+        this.r -= 0.2;
+        //如果小球的半径小于0了，从数组中删除
+        if(this.r < 0){
+          this.remove();
+        }
+      }
+      Ball.prototype.remove = function(){
+        for(var i = 0; i < ballArr.length; i++){
+          if(ballArr[i] == this){//this指向当前小球
+            ballArr.splice(i, 1);
+          }
+        }
+      }
+      //渲染小球
+      Ball.prototype.render = function(){
+        ctx.beginPath();//设置起始路径
+        ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2, false);//画出一个圆
+        ctx.fillStyle = this.color;//设置圆的颜色
+        ctx.fill();//填充绘制圆
+      }
+      //维护小球的数组
+      var ballArr = [];
+      //动画过程 = 定时器进行动画渲染和更新
+      setInterval(function(){
+        //清屏-更新-渲染
+        //清屏
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        //更新渲染
+        for(var i = 0; i < ballArr.length; i++){
+          ballArr[i].update();
+          if(ballArr[i]){
+            ballArr[i].render();
+          }
+        }
+      },10)
+    </script>
+  </body>
+  

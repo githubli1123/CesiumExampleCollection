@@ -1048,7 +1048,9 @@ EntityCluster 是Cesium中的实体聚合类，用于对多个实体 **Billboard
 
 
 
-## 水体模型的前端展示构建流程
+## 案例：水体模型的前端展示构建流程
+
+待写（需要整理一下思路）
 
 ### 数据源制作
 
@@ -1066,9 +1068,12 @@ arcgis工具
 
 
 
-为什么 GeoJsonDataSource 实例没有 position：因为这是一个 collection ，一个 entity 的 collection 。但每个 entity 有 position ，每个 entity 有 polygon ，polygon 有 height 。
-
-GeoJsonDataSource 实例中有 show 属性 为 true，GeoJsonDataSource 实例中的 entities 属性中也有 show 属性 为 true ，但 entities 中的 polygon 中 show 属性为 undefined 。
+> 注：
+>
+> 为什么 GeoJsonDataSource 实例没有 position：因为这是一个 collection ，一个 entity 的 collection 。但每个 entity 有 position ，每个 entity 有 polygon ，polygon 有 height 。
+>
+> GeoJsonDataSource 实例中有 show 属性 为 true，GeoJsonDataSource 实例中的 entities 属性中也有 show 属性 为 true ，但 entities 中的 polygon 中 show 属性为 undefined 。
+>
 
 
 
@@ -1102,11 +1107,19 @@ https://zhuanlan.zhihu.com/p/320877649
 
 ### WebGL简单知识总结
 
+待写，争取在2023年12月完成
 
 
 
 
 
+
+
+## 案例：绘制流动线
+
+最近有一个流动线的需求，需要在原来的项目代码上完成，这里不涉及一些设计，只讨论一下功能点如何实现。
+
+https://www.cnblogs.com/LFeather/p/15824842.html
 
 
 

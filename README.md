@@ -1079,7 +1079,7 @@ arcgis工具
 
 
 
-## Primitive 绘制一个三角形📐
+## 案例：Primitive 绘制一个三角形📐
 
 参考资料：
 

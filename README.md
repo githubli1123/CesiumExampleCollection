@@ -1123,6 +1123,103 @@ https://www.cnblogs.com/LFeather/p/15824842.html
 
 
 
+我把文章中的使用entity的那个思路代码 改写为了 ES6 类语法
+
+扩展类PolylineTrailMaterialProperty.ts 为以下代码：
+
+```tsx
+import * as Cesium from 'cesium'
+
+export default class PolylineTrailMaterialProperty {
+  _definitionChanged: any;
+  _color: any;
+  _colorSubscription: any;
+  _time: any;
+
+  color: any;
+  duration: any;
+  trailImage: any;
+
+  constructor(options = {}) {
+    this._definitionChanged = new Cesium.Event();
+    this._color = undefined;
+    this._colorSubscription = undefined;
+    this._time = performance.now();
+
+    this.color = options.color;
+    this.duration = options.duration;
+    this.trailImage = options.trailImage;
+  }
+
+  get isConstant() {
+    return false;
+  }
+
+  get definitionChanged() {
+    return this._definitionChanged;
+  }
+
+  getType() {
+    return 'PolylineTrail';
+  }
+
+  getValue(time, result) {
+    if (!Cesium.defined(result)) {
+      result = {};
+    }
+
+    result.color = Cesium.Property.getValueOrClonedDefault(
+      this._color,
+      time,
+      Cesium.Color.WHITE,
+      result.color
+    );
+    result.image = this.trailImage;
+    result.time = ((performance.now() - this._time) % this.duration) / this.duration;
+
+    return result;
+  }
+
+  equals(other) {
+    return (
+      this === other ||
+      (other instanceof PolylineTrailMaterialProperty &&
+        Cesium.Property.equals(this._color, other._color))
+    );
+  }
+}
+
+Cesium.Material.PolylineTrailType = 'PolylineTrail';
+Cesium.Material.PolylineTrailImage = './colors1.png';
+Cesium.Material.PolylineTrailSource =`
+czm_material czm_getMaterial(czm_materialInput materialInput){
+    czm_material material = czm_getDefaultMaterial(materialInput);
+    vec2 st = materialInput.st;
+    // texture2D 改为 texture 就可以运行？？？
+    vec4 colorImage = texture(image, vec2(fract(st.s - time), st.t));
+    material.alpha = colorImage.a * color.a;
+    material.diffuse = (colorImage.rgb+color.rgb)/2.0;
+    return material;
+}`;
+
+Cesium.Material._materialCache.addMaterial(Cesium.Material.PolylineTrailType, {
+  fabric: {
+    type: Cesium.Material.PolylineTrailType,
+    uniforms: {
+      color: new Cesium.Color(1.0, 0.0, 0.0, 0.5),
+      image: Cesium.Material.PolylineTrailImage,
+      time: 0,
+    },
+    source: Cesium.Material.PolylineTrailSource,
+  },
+  translucent: function () {
+    return true;
+  },
+});
+```
+
+
+
 
 
 ## tips

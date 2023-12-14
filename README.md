@@ -1123,7 +1123,13 @@ https://www.cnblogs.com/LFeather/p/15824842.html
 
 
 
-我把文章中的使用entity的那个思路代码 改写为了 ES6 类语法
+懂得原理就不难，下面着重介绍实现原理和思路
+
+一、流动
+
+我把文章中的使用entity的那个思路代码 改写为了 ES6 类语法，实现一个中心点向外散射射线的效果
+
+【GIF】
 
 扩展类PolylineTrailMaterialProperty.ts 为以下代码：
 
@@ -1220,9 +1226,13 @@ Cesium.Material._materialCache.addMaterial(Cesium.Material.PolylineTrailType, {
 
 
 
+二、闪烁
 
 
-## tips
+
+
+
+## 📝tips
 
 >带有透明度的颜色的图层叠加后是会让颜色也叠加的
 
@@ -1264,3 +1274,60 @@ for (var i = 0; i < pickedObjects.length; ++i) {
 ```
 
 在实际应用中，由于射线查询是一个相对耗时的操作，为了提高性能，可以使用空间分割算法（如八叉树）来对空间进行划分，只检测射线路径经过的空间，避免不必要的查询。
+
+
+
+
+
+
+
+## ❓大大的疑惑
+
+```
+	const path = 'src/components/流动线/_道路线.json';
+    let a = new Cesium.GeoJsonDataSource();
+    let b = new Cesium.GeoJsonDataSource();
+    // 图层1
+    await a.process(path).then(function (dataSource) {
+        viewer.dataSources.add(dataSource); // viewer.entities.add(dataSource);失效？
+    });
+    // 图层2
+    await b.load('src/components/流动线/_道路线.json').then(function (dataSource) {
+        viewer.dataSources.add(dataSource);
+        const entities = dataSource.entities.values;
+        createRiverLines(entities);
+    });
+```
+
+​	为啥图层1没有展示，图层2展示了？？？？？？？？？？？？？？？？？？？？？？？？？？？
+
+从这里可以看出我对于 Cesium 中的关于数据容器相关的 API 不熟悉！！！需要总结脑图
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

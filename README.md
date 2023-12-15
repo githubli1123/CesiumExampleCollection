@@ -1232,6 +1232,57 @@ Cesium.Material._materialCache.addMaterial(Cesium.Material.PolylineTrailType, {
 
 
 
+
+
+
+
+
+
+## 案例：图层加载与管理器
+
+```js
+{
+	name: 'layerName',
+	id: uuid,
+	url: 'URL',
+	basicGeometry: 'point',
+	style: Cesium.PointGraphics.ConstructorOptions,
+	FloatText:  // 这个需要分析一下
+}
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 ## 📝tips
 
 >带有透明度的颜色的图层叠加后是会让颜色也叠加的

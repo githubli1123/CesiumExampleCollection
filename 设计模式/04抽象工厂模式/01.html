@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+<script>
+// 抽象工厂模式
+class User{
+    constructor(name, role, pages){
+        this.name = name;
+        this.role = role;
+        this.pages = pages;
+    }
+
+    welcome(){
+        console.log(`Welcome ${this.name}`);
+    }
+
+    dataShow(){
+        throw new Error("抽象方法需要被实现");
+    }
+}
+
+class SuperAdmin extends User{
+    constructor(name, role, pages){
+        super(name, 'superadmin', ['home', 'user-manage', 'tight-manage', 'news=message']);
+    }
+    dataShow(){
+        console.log('superadmin');
+    }
+
+    addUser(){
+
+    }
+}
+
+class Admin extends User{
+    constructor(name, role, pages){
+        super(name, 'admin', ['home', 'user-manage', 'news-message']);
+    }
+    dataShow(){
+        console.log('admin');
+    }
+
+    addUser(){
+
+    }
+}
+
+class Editor extends User{
+    constructor(name, role, pages){
+        super(name, 'admin', ['home', 'news-message']);
+    }
+    dataShow(){
+        console.log('editor');
+    }
+}
+
+function getAbstractUserFactory(role){
+    switch(role){
+        case 'superadmin':
+            return SuperAdmin;
+        case 'admin':
+            return Admin;
+        case 'editor':
+            return Editor;
+        default:
+            throw new Error('参数错误');
+    }
+}
+
+let u = new (getAbstractUserFactory('superadmin'));
+
+console.log('u', u);
+console.log('u.__proto__', u.__proto__);
+console.log('u.__proto__.__proto__', u.__proto__.__proto__);
+
+console.log('',SuperAdmin.prototype) // User类
+console.log('',User.prototype) // 似乎也是User类
+
+u.dataShow(); // superadmin
+u.__proto__.dataShow(); // superadmin
+u.__proto__.__proto__.dataShow(); // Error 抽象方法需要被实现
+</script>
+</body>
+</html>

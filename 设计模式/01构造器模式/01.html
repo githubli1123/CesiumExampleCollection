@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body>
+    <script>
+// 构造器模式 ES5
+function PersonES5(name, age) {
+    this.name = name;
+    this.age = age;
+}
+let p1 = new PersonES5('Tom', 18);
+let p2 = new PersonES5('Jerry', 20);
+
+
+// 构造器模式 ES6+
+class PersonES6 {
+    constructor(name, age) {
+        this.name = name
+        this.age = age
+    }
+}
+const zhangsan = new PersonES6('zhansan2', 19)
+
+    </script>
+</body>
+
+</html>

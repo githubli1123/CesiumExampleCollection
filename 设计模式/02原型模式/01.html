@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body>
+    <script>
+// 原型模式 ES5
+function PersonES5(name, age) {
+    this.name = name;
+    this.age = age;
+}
+Person.prototype.say = function () {
+    console.log(`${this.name} is ${this.age} years old.`);
+}
+let p1 = new PersonES5('Tom', 18);
+p1.say();
+let p2 = new PersonES5('Jerry', 20);
+p2.say();
+
+// 原型模式 ES6+
+class PersonES6 {
+    constructor(name, age) {
+        this.name = name
+        this.age = age
+    }
+    say() {
+        console.log('hello')
+    }
+}
+const zhangsan = new PersonES6('zhansan2', 19)
+zhangsan.say();
+
+        // 工厂模式
+        function createPerson(name, age) {
+            let o = new Object();
+            o.name = name;
+            o.age = age;
+            o.say = function () {
+                console.log(`${this.name} is ${this.age} years old.`);
+            }
+            return o;
+        }
+        let p3 = createPerson('Alice', 22);
+        p3.say();
+
+        // 原型模式
+        function Person() { }
+        Person.prototype.name = 'Tom';
+        Person.prototype.age = 18;
+        Person.prototype.say = function () {
+            console.log(`${this.name} is ${this.age} years old.`);
+        }
+        let p4 = new Person();
+        p4.say();
+
+    </script>
+</body>
+
+</html>

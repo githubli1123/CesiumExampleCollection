@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+<script>
+// 工厂模式 ES5 
+function User(role, pages){
+    this.role = role;
+    this.pages = pages;
+}
+function UserFactory(role){
+    switch(role){
+        case 'superadmin':
+            return new User('superadmin', ['home', 'user-manage', 'tight-manage', 'news=message']);
+        break;
+
+        case 'admin':
+            return new User('admin', ['home', 'user-manage', 'news-message']);
+        break;
+
+        case 'user':
+            return new User('user', ['home', 'news-message']);
+        break;
+
+        default:
+            throw new Error('参数错误, 可选参数:superadmin, admin, user');
+        break;
+
+    }
+}
+
+// 工厂模式 ES6
+class UserES6{
+    constructor(role, pages){
+        this.role = role;
+        this.pages = pages;
+    }
+    
+    static UserFactory(role){
+        // map 映射改写也可
+        switch(role){
+            case 'superadmin':
+                return new User('superadmin', ['home', 'user-manage', 'tight-manage', 'news=message']);
+            break;
+
+            case 'admin':
+                return new User('admin', ['home', 'user-manage', 'news-message']);
+            break;
+
+            case 'user':
+                return new User('user', ['home', 'news-message']);
+            break;
+
+            default:
+                throw new Error('参数错误, 可选参数:superadmin, admin, user');
+            break;
+        }
+    }
+}
+let user = UserES6.UserFactory('admin');
+
+</script>
+</body>
+</html>

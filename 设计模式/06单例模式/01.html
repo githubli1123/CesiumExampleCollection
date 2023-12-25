@@ -1,0 +1,54 @@
+<!--
+ * @Author: ZJ Wu
+ * @Date: 2023-12-25 14:41:10
+ * @LastEditTime: 2023-12-25 14:53:08
+ * @Description: 单例模式，闭包实现
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+<script>
+// 单例模式 ES5
+let SingletonES5 = (function(){
+    let instance;
+
+    function User(name, age){
+        this.name = name;
+        this.age = age;
+    }
+
+    return function(name, age){
+        if(!instance){
+            instance = new User(name, age);
+        }
+        return instance;
+    }
+})();
+
+let x = SingletonES5('x');
+let y = SingletonES5('y');
+console.log(x === y); // true
+
+// 单例模式 ES6
+class SingletonES6 {
+    constructor(name, age){
+        if(!SingletonES6.instance){
+            this.name = name;
+            this.age = age;
+            SingletonES6.instance = this;
+        }
+        return SingletonES6.instance;
+    }
+}
+let z = new SingletonES6('z');
+let w = new SingletonES6('w');
+console.log(z === w); // true
+
+</script>
+</body>
+</html>

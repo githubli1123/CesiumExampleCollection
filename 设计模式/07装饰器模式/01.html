@@ -1,0 +1,57 @@
+<!--
+ * @Author: ZJ Wu
+ * @Date: 2023-12-25 15:20:17
+ * @LastEditTime: 2023-12-25 15:41:31
+ * @Description: 
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+<script>
+
+// 装饰器模式 ES5
+Function.prototype.before = function(beforeFn){
+    let _this = this; // 保存原函数的引用
+    return function(){
+        // 先进行前置函数调用
+        beforeFn.apply(this,arguments);
+        // 再执行原函数
+        return _this.apply(this,arguments);
+    }
+}
+Function.prototype.after = function(afterFn){
+    let _this = this;
+    return function(){
+        // 先执行原函数
+        let result = _this.apply(this,arguments);
+        // 再执行后置函数
+        afterFn.apply(this,arguments);
+        return result;
+    }
+}
+function Test(){
+    console.log('test');
+}
+
+
+// 测试1：单独创建一下Test的实例。只输出 test
+Test();console.log('------');// 输出结果上等价于 new Test();
+
+// 测试2：使用装饰器。先输出 beforetest，再输出test，最后输出 aftertest
+let beforetest = Test
+    .before(function(){
+        console.log('beforetest');
+    })
+    .after(function(){
+        console.log('aftertest');
+    });
+beforetest();
+
+</script>
+</body>
+</html>

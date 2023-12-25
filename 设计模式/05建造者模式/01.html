@@ -1,3 +1,9 @@
+<!--
+ * @Author: Wu Zhoujie
+ * @Date: 2023-12-25 09:33:30
+ * @LastEditTime: 2023-12-25 14:35:42
+ * @Description: 
+-->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -31,9 +37,9 @@ class List{
     getData(){
         return new Promise((resolve)=>{
             setTimeout(() => {
+                console.log('@@@list getData')
                 resolve('@@@list getData');
-                
-            }, 1000);
+            }, 3000);
         })
         
     }
@@ -44,9 +50,9 @@ class List{
 
 class Creator{
     async startBuild(builder){
-        builder.init();
+        await builder.init();
         await builder.getData();
-        builder.render();
+        await builder.render();
     }
 }
 

@@ -1,0 +1,42 @@
+<!--
+ * @Author: ZJ Wu
+ * @Date: 2023-12-25 16:06:42
+ * @LastEditTime: 2023-12-25 16:21:59
+ * @Description: 
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+<script>
+
+// 适配器模式
+class TencentMap {
+    show(){
+        console.log('开始渲染腾讯地图');
+    }
+}
+
+class BaiduMap {
+    display(){
+        console.log('开始渲染百度地图');
+    }
+}
+
+// 让我清楚地知道这个地方不适配，我人为让它适配
+class TencentAdapater extends TencentMap{
+    constructor(){
+        super();
+    }
+    display(){
+        this.show();
+    }
+}
+
+</script>
+</body>
+</html>

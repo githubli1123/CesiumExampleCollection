@@ -13,7 +13,7 @@
 
 
 
-## 脏值检测
+### 脏值检测
 
 angular使用的就是脏值检测，原理是比较新值和旧值，当值真的发生改变时再去更改DOM，所以angular中有一个`$digest`。那么为什么在像`ng-click`这样的内置指令在触发后会自动变更呢？原理也很简单，在`ng-click`这样的内置指令中最后追加了`$digest`。
 
@@ -87,7 +87,9 @@ angular使用的就是脏值检测，原理是比较新值和旧值，当值真�
 
 关于如何实现一个和angular一样的脏值检测，知道原理后还有很多工作要去做，以及如何优化等等。如果有兴趣可以看看民工叔曾经推荐的《Build Your Own Angular.js》，第一章`Scope`便讲了如何实现angular的作用域和脏值检测。对了，上面的例子也是从民工叔的博客稍加修改来的，建议最后去看下原文，链接在参考资料中。
 
-## ES5的`getter`与`setter`
+
+
+### ES5的`getter`与`setter`
 
 在ES5中新增了一个`Object.defineProperty`，直接在一个对象上定义一个新属性，或者修改一个已经存在的属性， 并返回这个对象。
 
@@ -179,7 +181,9 @@ export const arrayMethods = Object.create(arrayProto)
 但是这样还是不能解决修改数组的`length`和直接用索引设置元素如`items[0] = {}`的问题，想要解决依然可以参考Vue的做法：
 前一个问题可以直接用新的数组代替旧的数组；后一个问题可以为数组拓展一个`$set`方法，在执行修改后顺便触发视图的更新。
 
-## 已被废弃的`Object.observe`
+
+
+### 已被废弃的`Object.observe`
 
 `Object.observe`曾在ES7的草案中，并在提议中进展到stage2，最终依然被废弃。
 这里只举一个MDN上的例子：
@@ -211,7 +215,9 @@ Object.observe(user, function(changes) {
 由于是已经废弃了的特性，Chrome虽然曾经支持但也已经废弃了支持，这里不再讲更多，有兴趣可以搜一搜以前的文章，这曾经是一个被看好的特性（[Object.observe()带来的数据绑定变革](http://div.io/topic/600)）。
 当然关于它也有一些替代品[Polymer/observe-js](https://github.com/polymer/observe-js)。
 
-## ES6带来的`Proxy`
+
+
+### ES6带来的`Proxy`
 
 人如其名，类似HTTP中的代理：
 
@@ -250,7 +256,7 @@ a.zhihu = 100;
 目前已经有babel插件可以实现，但是据说实现的比较复杂。
 如果是Node的话升级到目前的最新版本应该就可以使用了，上面的例子测试环境为Node v6.4.0。
 
-# 参考资料
+### 参考资料
 
 - [Angular沉思录（一）数据绑定](https://github.com/xufei/blog/issues/10)
 - [Object.defineProperty() - JavaScript | MDN](https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Global_Objects/Object/defineProperty)
@@ -259,4 +265,22 @@ a.zhihu = 100;
 - [Proxy - JavaScript | MDN](https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Global_Objects/Proxy)
 
  [JavaScript](https://blog.daraw.cn/categories/JavaScript/) [JavaScript](https://blog.daraw.cn/tags/JavaScript/)[Proxy](https://blog.daraw.cn/tags/Proxy/)[脏值检测](https://blog.daraw.cn/tags/脏值检测/)
+
+
+
+
+
+## Promise
+
+下面文章
+
+[Promises/A+ 规范和 ECMAscript 6 中 Promise 规范区别？ - 知乎 (zhihu.com)](https://www.zhihu.com/question/279850405/answer/779173718)
+
+[谁规定了 Promise 是 microTask](https://juejin.cn/post/7095543708841426975)
+
+[展开看看Promise](https://juejin.cn/post/7055202073511460895)
+
+
+
+
 

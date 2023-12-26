@@ -1,0 +1,103 @@
+<!--
+ * @Author: ZJ Wu
+ * @Date: 2023-12-26 14:06:29
+ * @LastEditTime: 2023-12-26 14:47:26
+ * @Description: 
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+
+<script>
+// 发布订阅模式 ES6
+class EventEmitter {
+  // 订阅者列表
+  subscriber = {};
+
+  // 订阅
+  subscribe(key, fn) {
+    if (!Array.isArray(this.subscriber[key])) {
+      this.subscriber[key] = [];
+    }
+    this.subscriber[key].push(fn);
+  }
+
+  // 取消单个订阅，不传入fn时则取消所有订阅
+  unsubscribe(key, fn) {
+    if(!fn){ unsubscribeAll(key); return;}
+    const subscribers = this.subscriber[key] || [];
+    this.subscriber[key] = subscribers.filter((_fn) => _fn !== fn);
+  }
+
+  // 取消所有订阅
+  unsubscribeAll(key) {
+    this.subscriber[key] = [];
+  }
+
+  /**
+  * @param {String} key 订阅(注册)的名字
+  * @param {Function} args 订阅(注册)相对应的回调函数
+  **/
+  publish(key, ...args) {
+    const subscribers = this.subscriber[key] || [];
+
+    if (subscribers.length === 0) {
+      console.log("has't subscriber");
+    }
+
+    subscribers.forEach((subscriber) => {
+      subscriber.apply(this, args);
+    });
+  }
+}
+
+
+//--------------------- 使用 ------------------------//
+// 创建发布订阅信道中介
+const e = new EventEmitter();
+// 发布者
+const publisher = {
+  article1: 'article1',
+  article2: 'article2',
+};
+// 订阅者
+const subscriber1 = (article) => {
+  console.log(`fans1 receive ${article}`);
+};
+const subscriber2 = (article) => {
+  console.log(`fans2 receive ${article}`);
+};
+
+
+
+// 订阅操作（注册一个事件）
+e.subscribe('event1', subscriber1);
+e.subscribe('event1', subscriber2);
+
+// 发布操作（触发一个事件）
+e.publish('event1', publisher.article1); 
+// 输出：fans1 receive article1 和 fans2 receive article1
+
+// 多事件发布订阅
+e.subscribe('event2', subscriber1);
+e.publish('event2', publisher.article1);
+// fans1 receive article1
+
+// 取消单个订阅
+e.unsubscribe('event1', subscriber1);
+e.publish('event1', publisher.article2);
+// fans2 receive article2
+
+// 取消所有订阅
+e.unsubscribeAll('event1');
+e.publish('event1');
+// has't subscriber
+
+</script>
+</body>
+</html>

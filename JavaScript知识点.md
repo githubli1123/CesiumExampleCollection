@@ -284,3 +284,20 @@ a.zhihu = 100;
 
 
 
+## Proxy
+
+目的：监控对象属性的操作，操作包括修改等
+
+**`Object.defineProperty()`** 静态方法会直接在一个对象上定义一个新属性，或修改其现有属性，并返回此对象。 
+
+**Proxy** 对象用于创建一个对象的代理，从而实现基本操作的拦截和自定义（如属性查找、赋值、枚举、函数调用等）。
+
+
+
+
+
+## module
+
+Module：ESM  CommonJS
+
+[20分钟学会ES6之代理与模块 Proxy&Module_哔哩哔哩_bilibili](https://www.bilibili.com/video/BV1Nj411X7QL/?vd_source=a9caa6410eb2baf51ab8ecfb66da5f53)

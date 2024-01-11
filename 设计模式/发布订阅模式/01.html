@@ -1,7 +1,7 @@
 <!--
  * @Author: ZJ Wu
  * @Date: 2023-12-26 14:06:29
- * @LastEditTime: 2023-12-26 14:47:26
+ * @LastEditTime: 2024-01-11 16:02:31
  * @Description: 
 -->
 <!DOCTYPE html>
@@ -9,7 +9,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>发布订阅模式</title>
 </head>
 <body>
 
@@ -81,7 +81,7 @@ e.subscribe('event1', subscriber2);
 
 // 发布操作（触发一个事件）
 e.publish('event1', publisher.article1); 
-// 输出：fans1 receive article1 和 fans2 receive article1
+// 输出：'fans1 receive article1' 和 'fans2 receive article1'
 
 // 多事件发布订阅
 e.subscribe('event2', subscriber1);

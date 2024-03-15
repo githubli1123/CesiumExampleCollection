@@ -1257,6 +1257,18 @@ Cesium.Material._materialCache.addMaterial(Cesium.Material.PolylineTrailType, {
 
 
 
+## fromCssColorString转换rgb格式颜色值出现 色差偏大
+
+```JS
+'rgb(150,255,255)' 标准色为 'rgb(204,255,255)'，
+但经过Cesium.Color.fromCssColorString()转化后为
+{red: 0.8, green: 1, blue: 1, alpha: 1} 视觉上为白色
+```
+
+
+
+![image-20240315153538639](C:\Users\123\AppData\Roaming\Typora\typora-user-images\image-20240315153538639.png)
+
 
 
 

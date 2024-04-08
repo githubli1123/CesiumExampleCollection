@@ -51,12 +51,82 @@ CesiumWidget.prototype.render = function () {
 
 🤔有待回答：哪些场景和状态，这些状态具体的作用是什么？
 
+
+
 Scene  类原型上的 `render` 方法负责：
 
-- 触发渲染循环中的生命周期事件（preUpdate、preRender、postUpdate、postRender）。这个地方涉及 Cesium 事件机制知识点。见图。
+- 触发单帧中的生命周期事件（preUpdate、preRender、postUpdate、postRender）🔢。这个地方涉及 Cesium 事件机制知识点。见图
 - 更新帧状态和帧序号
 - 更新 Scene 中的 Primitive
-- 移交渲染权给模块内的 `render` 函数触发 WebGL 绘制
+- 调用类中的 `render` 函数，将渲染责任递给 WebGL context （其实是 Context 对象，对 WebGL 的封装），触发绘制。
+
+下面是Scene  类原型上的 `render` 方法的伪代码
+
+```js
+/**
+ * Update and render the scene. It is usually not necessary to call this function
+ * directly because {@link CesiumWidget} or {@link Viewer} do it automatically.
+ * @param {JulianDate} [time] The simulation time at which to render.
+ */
+Scene.prototype.render = function (time) {
+  // 1. Pre passes update. Execute any pass invariant code that should run before the passes here.
+  this._preUpdate.raiseEvent(this, time); // 1️⃣
+
+  const frameState = this._frameState;
+  frameState.newFrame = false;
+
+  if (!defined(time)) {time = JulianDate.now();}
+
+  // Determine if shouldRender
+  const cameraChanged = this._view.checkForCameraUpdates(this);
+  let shouldRender = ...
+  if (...) {
+    const difference = ...
+    shouldRender = shouldRender || difference > this.maximumRenderTimeChange;
+  }
+
+  if (shouldRender) {
+    ... 更新部分状态
+
+    const frameNumber = CesiumMath.incrementWrap(...);
+    updateFrameNumber(this, frameNumber, time);
+    frameState.newFrame = true;
+  }
+
+  tryAndCatchError(this, prePassesUpdate);
+
+  // 2. Passes update. Add any passes here
+  if (this.primitives.show) {
+    tryAndCatchError(this, updateMostDetailedRayPicks);
+    tryAndCatchError(this, updatePreloadPass);
+    tryAndCatchError(this, updatePreloadFlightPass);
+    if (!shouldRender) {
+      tryAndCatchError(this, updateRequestRenderModeDeferCheckPass);
+    }
+  }
+
+  this._postUpdate.raiseEvent(this, time); // 2️⃣
+
+  if (shouldRender) {
+    this._preRender.raiseEvent(this, time); // 3️⃣
+    frameState.creditDisplay.beginFrame();
+    tryAndCatchError(this, render); // ✨将渲染责任递给 WebGL context 
+  }
+
+  // 4. Post passes update. Execute any pass invariant code that should run after the passes here.
+  updateDebugShowFramesPerSecond(this, shouldRender);
+  tryAndCatchError(this, postPassesUpdate);
+
+  callAfterRenderFunctions(this);
+
+  if (shouldRender) {
+    this._postRender.raiseEvent(this, time); // 4️⃣
+    frameState.creditDisplay.endFrame();
+  }
+};
+```
+
+
 
 
 

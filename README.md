@@ -36,13 +36,13 @@
 
 **1** 分发包与源码包最大的区别在于，分发包提供了打包后的Build文件夹，可供调试或者发布直接使用；提供了两个版本的打包API，提供了API文档，删除了部分生产用不着的打包配置文件。注意，分发包保留了源码目录，但是有关打包命令可能失效。见图
 
-<img src="https://gitee.com/ahsfdx/cesium-example-collection-src/raw/master/Cesium%20Source%20code%20interpretation/%E5%88%86%E5%8F%91%E5%8C%85%E4%B8%8E%E6%BA%90%E7%A0%81%E5%8C%85.png" alt="分发包与源码包" style="zoom: 50%;" />
+<img src="https://github.com/githubli1123/CesiumExampleCollection/blob/main/Img/00%E6%96%87%E7%AB%A0%E7%9B%AE%E5%BD%95%E4%B8%8E%E6%BA%90%E7%A0%81%E7%9A%84%E7%AE%80%E5%8D%95%E8%B0%83%E8%AF%95/%E5%88%86%E5%8F%91%E5%8C%85%E4%B8%8E%E6%BA%90%E7%A0%81%E5%8C%85.png?raw=true" alt="分发包与源码包" style="zoom: 50%;" />
 
 
 
 **2**  `Source` 源码资源文件夹中的变更为了 `package` 文件夹。这一点可以在 [Cesium1.100版本更新日志](https://github.com/CesiumGS/cesium/releases/tag/1.100) 中看到，源代码已分区为两个文件夹： `packages/engine` 和 `packages/widgets`。
 
-<img src="https://gitee.com/ahsfdx/cesium-example-collection-src/raw/master/Cesium%20Source%20code%20interpretation/Cesium1.100%E7%89%88%E6%9C%AC%E5%90%8E%E5%B7%A5%E7%A8%8B%E7%9B%AE%E5%BD%95%E7%9A%84%E6%94%B9%E5%8F%98.png" alt="分发包与源码包" style="zoom: 50%;" />
+<img src="https://github.com/githubli1123/CesiumExampleCollection/blob/main/Img/00%E6%96%87%E7%AB%A0%E7%9B%AE%E5%BD%95%E4%B8%8E%E6%BA%90%E7%A0%81%E7%9A%84%E7%AE%80%E5%8D%95%E8%B0%83%E8%AF%95/Cesium1.100%E7%89%88%E6%9C%AC%E5%90%8E%E5%B7%A5%E7%A8%8B%E7%9B%AE%E5%BD%95%E7%9A%84%E6%94%B9%E5%8F%98.png?raw=true" alt="分发包与源码包" style="zoom: 50%;" />
 
 
 
@@ -54,7 +54,7 @@
 
 [Cesium打包命令总结 - Cesium实验室 - 博客园 (cnblogs.com)](https://www.cnblogs.com/cesium1/p/10062900.html)
 
-[Cesium开发工具篇 | 06Cesium源码编译打包 - 知乎 (zhihu.com)](https://zhuanlan.zhihu.com/p/369519695)
+[Cesium开发工具篇 06Cesium源码编译打包 - 知乎 (zhihu.com)](https://zhuanlan.zhihu.com/p/369519695)
 
 [Cesium打包入门(gulp与esbuild)_scripts.prepare cesium@1.95-CSDN博客](https://blog.csdn.net/u011575168/article/details/128419078)
 
@@ -74,7 +74,7 @@
 
 所谓的渲染是指在浏览器 canvas 上绘制图像，调度是指控制着这个渲染的使用。借助 `requestAnimationFrame, rAF` 这个浏览器 API 来不断在每一帧调用 单帧渲染函数 `render()` ，单帧渲染函数借助 WebGL 来实现 canvas 绘制。而这个多帧循环往复运行和渲染的过程有一个调度者，是 `CesiumWidget` 类。
 
-![](https://gitee.com/ahsfdx/cesium-example-collection-src/raw/master/Cesium%20Source%20code%20interpretation/Cesium%E7%9A%84%E6%B8%B2%E6%9F%93%E8%B0%83%E5%BA%A6%E5%A4%A7%E8%87%B4%E5%9B%BE.png)
+![](https://github.com/githubli1123/CesiumExampleCollection/blob/main/Img/01Cesium%E7%9A%84%E6%B8%B2%E6%9F%93%E8%B0%83%E5%BA%A6/Cesium%E7%9A%84%E6%B8%B2%E6%9F%93%E8%B0%83%E5%BA%A6%E5%A4%A7%E8%87%B4%E5%9B%BE.png?raw=true)
 
 下面是简化后的伪代码①，渲染循环的开始
 
@@ -198,7 +198,7 @@ Scene.prototype.render = function (time) {
 
 图示了生命周期，✒该图会不断 更新&改变 内容，暂时这样。
 
-<img src="https://gitee.com/ahsfdx/cesium-example-collection-src/raw/master/Cesium%20Source%20code%20interpretation/LifecycleEvent.png" alt="Lifecycle" style="zoom: 80%;" />
+<img src="https://github.com/githubli1123/CesiumExampleCollection/blob/main/Img/01Cesium%E7%9A%84%E6%B8%B2%E6%9F%93%E8%B0%83%E5%BA%A6/LifecycleEvent.png?raw=true" alt="Lifecycle" style="zoom: 80%;" />
 
 由于生命周期事件，我们可以在项目中使用类似的代码 `scene.addEventListener(cb)` 来为每一帧做一些自定义的任务。
 例如：每次渲染之前（即preRender事件）打印一下`时间差不多喽` 。代码大致：
@@ -230,7 +230,7 @@ viewer.scene.preRender.addEventListener(()=>{
 
 站在事件机制的角度，对这个 Scene 原型上的 `render()` 方法进行分析：略......见下图
 
-<img src="https://gitee.com/ahsfdx/cesium-example-collection-src/raw/master/Cesium%20Source%20code%20interpretation/event.png" alt="event"  />
+<img src="https://github.com/githubli1123/CesiumExampleCollection/blob/main/Img/01Cesium%E7%9A%84%E6%B8%B2%E6%9F%93%E8%B0%83%E5%BA%A6/event.png?raw=true" alt="event"  />
 
 左上角为事件注册者，提供事件回调。右边为事件处理者或者叫事件触发器，由一个事件来触发 事件处理者。由于该生命周期事件，我们可以在项目中使用类似的代码 `scene.addEventListener(cb)` 来为每一帧做一些自定义的任务。例如：每次渲染之前（即preRender事件）打印一下`时间差不多喽` 。
 

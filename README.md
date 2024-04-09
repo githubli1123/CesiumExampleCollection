@@ -244,8 +244,11 @@ Cesium 实现事件机制的模式是发布订阅模式（Publisher-Subscriber�
 ### 4  小结
 
 Cesium 的渲染循环，是在实例化 `Viewer` 时实例化了 `CesiumWidget` ，由属性 `_useDefaultRenderLoop` setter 触发 `startRenderLoop()` 方法，从而开启了渲染循环。在绘制一帧的逻辑中：
+
 ✅ `CesiumWidget 类` 支持了对 DOM 变化的响应，让 帧渲染出的内容 放置在合适正确的布局中。
+
 ✅ `CesiumWidget 类` 将渲染责任递给 WebGL context ，责任划分明确，只担任渲染调度者，渲染的具体逻辑（指绘制地球等）不包含其中。
+
 ✅ `Scene 类` 支持了帧渲染生命周期事件，为开发者预留了对 帧渲染过程 的操作空间。
 
 目前没有必要再继续深究 地球是如何绘制的 实体是如何绘制的，这涉及 Globe 、Primitive 等数据实体的更新和渲染，也涉及到 WebGL 在 Cesium 中如何调度 —— 这些都不是渲染循环这个概念中的内容。

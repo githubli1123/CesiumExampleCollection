@@ -34,7 +34,7 @@ function startRenderLoop(widget: CesiumWidget) {
 
 
 
-### 2 Scene 类是场景对象容器
+### 2  Scene 类是场景对象容器
 
 需要进入到伪代码①中的 `widget.render(); // 单帧渲染` 
 
@@ -55,9 +55,9 @@ CesiumWidget.prototype.render = function () {
 
 Scene  类原型上的 `render` 方法负责：
 
-- 触发单帧中的生命周期事件（preUpdate、preRender、postUpdate、postRender）🔢。这个地方涉及 Cesium 事件机制知识点。见图
+- 触发单帧中的生命周期事件（`preUpdate、preRender、postUpdate、postRender`）🔢。这个地方涉及 Cesium 事件机制知识点。
 - 更新帧状态和帧序号
-- 更新 Scene 中的 Primitive
+- 更新 `Scene` 中的 Primitive
 - 调用类中的 `render` 函数，将渲染责任递给 WebGL context （其实是 Context 对象，对 WebGL 的封装），触发绘制。
 
 下面是Scene  类原型上的 `render` 方法的伪代码
@@ -126,10 +126,56 @@ Scene.prototype.render = function (time) {
 };
 ```
 
+图示了生命周期，✒该图会不断 更新&改变 内容，暂时这样。
+
+<img src="https://gitee.com/ahsfdx/cesium-example-collection-src/raw/master/Cesium%20Source%20code%20interpretation/LifecycleEvent.png" alt="Lifecycle" style="zoom: 80%;" />
+
+由于生命周期事件，我们可以在项目中使用类似的代码 `scene.addEventListener(cb)` 来为每一帧做一些自定义的任务。
+例如：每次渲染之前（即preRender事件）打印一下`时间差不多喽` 。代码大致：
+
+```js
+viewer.scene.preRender.addEventListener(()=>{
+	console.log('时间差不多喽');
+})
+```
 
 
 
 
-### 3 小结
 
-Cesium 的渲染循环中，在绘制一帧的逻辑中，目前没有必要再继续深究 地球是如何绘制的 实体是如何绘制的，这涉及 Globe 、Primitive 等数据实体的更新和渲染，也涉及到 WebGL 在 Cesium 中如何调度 —— 这些都不是渲染循环这个概念中的内容。
+### 3  Event 类实现事件机制
+
+在编程领域，当谈论事件这个概念时，一般背靠着 事件驱动编程（Event-Driven Programming）思想 。事件驱动编程是一种常见的编程范式，它基于事件和事件处理器的概念，通过监听和响应事件来控制程序的执行流程。
+
+事件：
+
+- 用户的动作（如 点击鼠标、按下键盘等）
+- 系统状态变化（如 网络请求完成、定时器到期等）
+- 生命周期钩子（如 单帧渲染过程中按数据更新与渲染这两个重要过程细化的四个事件：preUpdate、preRender、postUpdate、postRender🔢 ）
+- 其他对象的状态改变（如 Entity 属性的改变、Entity 的增加等）
+
+事件处理器：为该事件注册的回调函数，事件触发后由其处理。
+
+---
+
+站在事件机制的角度，对这个 Scene 原型上的 `render()` 方法进行分析：略......见下图
+
+<img src="https://gitee.com/ahsfdx/cesium-example-collection-src/raw/master/Cesium%20Source%20code%20interpretation/event.png" alt="event"  />
+
+左上角为事件注册者，提供事件回调。右边为事件处理者或者叫事件触发器，由一个事件来触发 事件处理者。由于该生命周期事件，我们可以在项目中使用类似的代码 `scene.addEventListener(cb)` 来为每一帧做一些自定义的任务。例如：每次渲染之前（即preRender事件）打印一下`时间差不多喽` 。
+
+这个 Event 类会在后面反复使用，复用也是 Cesium 解耦出这个 helper class 的原因。同时，解耦 Event 类可以让事件机制更加清晰独立。
+Cesium 实现事件机制的模式是发布订阅模式（Publisher-Subscriber），具有一个事件中心（EventEmitter）也就是实例化的 Event ：preUpdate、postUpdate 等。
+
+事件机制也可以用观察者模式（Observer Pattern）来实现，这些模式决定了事件如何在组件之间进行传递和处理。
+
+
+
+### 4  小结
+
+Cesium 的渲染循环，是在实例化 `Viewer` 时实例化了 `CesiumWidget` ，由属性 `_useDefaultRenderLoop` setter 触发 `startRenderLoop()` 方法，从而开启了渲染循环。在绘制一帧的逻辑中：
+✅ `CesiumWidget 类` 支持了对 DOM 变化的响应，让 帧渲染出的内容 放置在合适正确的布局中。
+✅ `CesiumWidget 类` 将渲染责任递给 WebGL context ，责任划分明确，只担任渲染调度者，渲染的具体逻辑（指绘制地球等）不包含其中。
+✅ `Scene 类` 支持了帧渲染生命周期事件，为开发者预留了对 帧渲染过程 的操作空间。
+
+目前没有必要再继续深究 地球是如何绘制的 实体是如何绘制的，这涉及 Globe 、Primitive 等数据实体的更新和渲染，也涉及到 WebGL 在 Cesium 中如何调度 —— 这些都不是渲染循环这个概念中的内容。

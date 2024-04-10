@@ -324,7 +324,7 @@ Globe.prototype.beginFrame 这个方法主要做了以下事情：
 
 
 
-【思考 单一职责】当执行到下面这个函数时，渲染任务是 地球表面的影像皮肤，地球的地形骨架不在这里出现。单一职责嘛。
+【思考 单一职责】当执行到surface.beginFrame这个函数时，渲染任务是 地球表面的影像皮肤，地球的地形骨架不在这里出现。单一职责嘛。
 影像皮肤在这一帧中是如何下载、如何解析、如何投影、如何渲染、如何回退的？初学者不要试图理解函数执行顺序，只有经验足够的人
 才可以在纷繁复杂的函数执行中提炼出流程是如何设计的，我们目前是需要借助他人的理解，再加上自己对源码的阅读来提炼流程设计的奥秘。
 
@@ -390,3 +390,18 @@ beginFrame阶段的【？解析和投影】准备：
 
 关于地球影像皮肤渲染的 “职责” 函数 在 Globe.render ，然后就把任务分为 this._material.update(); 和 this._surface.render(); 
 
+❓我们会在 executeCommandsInViewport 函数中发现这两个函数 `updateAndRenderPrimitives` 和 `executeCommands` ，我很诧异！为什么会先更新和渲染primitives然后再执行webgl命令，从命名语义上看，`updateAndRenderPrimitives` 函数已经把primitives给画到屏幕上了，那还执行 commands 个什么劲。
+
+✅仔细看看`updateAndRenderPrimitives` 就破案了，这里的 primitives 是指的 globe，渲染的是 globe。难道 `executeCommands`  就一点都不管 gobe 的渲染了吗？目前我们假设是的。
+
+那么这里就要给大家看一张图，这张图表达了 数据，场景和渲染器 之间的关系，同时归纳总结了 primitives 这个 “数据集”
+
+<img src="https://images.prismic.io/cesium/2015-05-26-0.png?auto=compress%2Cformat&rect=0%2C0%2C1191%2C717&w=945"  />
+
+援引自文章：https://cesium.com/blog/2015/05/26/graphics-tech-in-cesium-stack/
+
+那么好，现在找到了渲染地球的函数方法 `Globe.prototype.render` ，渲染职责给到了 Globe ，_material 和 _surface 这两个代表了什么？
+
+```
+_material 涉及 makeShadersDirty 函数
+```

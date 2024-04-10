@@ -287,6 +287,8 @@ Cesium 的渲染循环，是在实例化 `Viewer` 时实例化了 `CesiumWidget`
 
 ## 02 Cesium的地球渲染过程
 
+需要一段时间梳理
+
 ### 1>  
 
 <img src="https://github.com/githubli1123/CesiumExampleCollection/blob/main/Img/02Cesium%E7%9A%84%E5%9C%B0%E7%90%83%E6%B8%B2%E6%9F%93%E8%BF%87%E7%A8%8B/%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F%E4%BA%8B%E4%BB%B6%E4%B8%AD%E7%9A%84render%E8%8A%82%E7%82%B9.png?raw=true" alt="图片资源在该项目中可以找到：生命周期事件中的render节点"  />

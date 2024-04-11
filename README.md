@@ -295,7 +295,7 @@ Cesium 的渲染循环，是在实例化 `Viewer` 时实例化了 `CesiumWidget`
 
 得找到哪些类是用于绘制地球的。
 
-从 scene 类出发，因为它是单帧渲染的起始，它原型上的 render 方法划分了生命周期事件，并在这些事件中间穿插了具体的用于渲染地球或者实体的函数，统一放在了函数 render 里，同时也穿插做了其他事情，但目前我们还不清楚，暂且不讨论。
+从 scene 类出发，因为它是单帧渲染的起始，它原型上的 render 方法划分了生命周期事件，并在这些事件中间穿插了具体的用于渲染地球或者实体的函数，统一放在了函数 render 里，同时也穿插做了其他事情，下面探讨一下。
 
 <img src="https://github.com/githubli1123/CesiumExampleCollection/blob/main/Img/02Cesium%E7%9A%84%E5%9C%B0%E7%90%83%E6%B8%B2%E6%9F%93%E8%BF%87%E7%A8%8B/%E6%B8%B2%E6%9F%93%E5%9C%B0%E7%90%83%E7%9A%84%E4%B8%89%E4%B8%AA%E9%87%8D%E8%A6%81%E9%98%B6%E6%AE%B5-%E8%AF%A5%E5%9B%BE%E7%89%87%E5%8F%AF%E5%9C%A8%E8%AF%A5%E9%A1%B9%E7%9B%AE%E4%B8%AD%E6%89%BE%E5%88%B0.png?raw=true" alt="渲染地球的三个重要阶段-该图片可在该项目中找到"  />
 
@@ -303,7 +303,7 @@ Cesium 的渲染循环，是在实例化 `Viewer` 时实例化了 `CesiumWidget`
 
 站在渲染责任角度看待这个过程？
 
-
+beginFrame是准备阶段，
 
 站在UML时序图看待这个过程？
 
@@ -403,5 +403,97 @@ beginFrame阶段的【？解析和投影】准备：
 那么好，现在找到了渲染地球的函数方法 `Globe.prototype.render` ，渲染职责给到了 Globe ，_material 和 _surface 这两个代表了什么？
 
 ```
-_material 涉及 makeShadersDirty 函数
+1. _material 初始化是 undefined， 会涉及 makeShadersDirty 函数
+getter 和 setter：获取或设置地球的材质外观。这可以是多个内置 Material 对象之一，也可以是使用 Fabric 编写脚本的自定义材质。
+material: {
+  get: function () {
+    return this._material;
+  },
+  set: function (material) {
+    if (this._material !== material) {
+      this._material = material;
+      makeShadersDirty(this);
+    }
+  },
+},
+
+2. _surface 初始化是 QuadtreePrimitive 实例
 ```
+
+由此可见，重要的不可或缺的是 _surface 属性。
+
+分为三个阶段：
+
+1  tileProvider.beginUpdate
+
+2  selectTilesForRendering(); createRenderCommandsForSelectedTiles();
+
+3  tileProvider.endUpdate
+
+```
+
+一阶段  这段代码是 GlobeSurfaceTileProvider 对象的 beginUpdate 方法，它在开始更新地球表面瓦片的过程中执行以下操作：
+
+1 清空 tilesToRenderByTextureCount 中的瓦片列表：
+遍历 tilesToRenderByTextureCount 数组，对每个纹理贴图数量对应的瓦片列表进行清空操作。
+这样做是为了准备接收新一轮更新后的瓦片数据。
+
+2 更新裁剪平面：
+如果存在裁剪平面，并且已启用，则调用 clippingPlanes.update(frameState) 方法更新裁剪平面。
+裁剪平面用于在渲染过程中对瓦片进行裁剪，以提高渲染性能或实现特定效果。
+
+3 重置已使用的绘制命令数目：
+将 _usedDrawCommands 属性重置为 0。
+这个属性用于记录当前帧已经使用的绘制命令数量，重置为 0 表示开始了新一轮的绘制过程。
+
+4 重置已加载的瓦片和填充瓦片的标志位：
+将 _hasLoadedTilesThisFrame 和 _hasFillTilesThisFrame 标志位都设置为 false。
+这两个标志位用于记录当前帧是否已经加载了瓦片或填充了瓦片，重置为 false 表示开始了新的渲染过程，需要重新记录。
+```
+
+```
+二阶段   createRenderCommandsForSelectedTiles();重要函数🌟showTileThisFrame(tile, frameState)：
+这个重要函数的作用：在这一帧中 指定 需要显示的tile。provider（GlobeSurfaceTileProvider）可以通过 将渲染命令添加到命令列表的操作 来显示tile，或者使用任何其他适当的方法。只有该方法在下一帧也被调用，该tile在下一帧才会可见。
+
+```
+
+```
+三阶段  这段代码是 `GlobeSurfaceTileProvider` 对象的 `endUpdate` 方法，它在地球表面瓦片更新周期结束后执行以下操作：
+
+1. **初始化渲染状态**：
+   - 如果当前没有定义渲染状态 (`this._renderState`)，则根据配置创建渲染状态。
+   - 创建的渲染状态包括：启用剔除、启用深度测试、设置深度测试函数等。
+
+2. **根据当前帧的加载和填充瓦片情况，更新填充瓦片的高度**：
+   - 如果当前帧同时存在加载的瓦片和填充的瓦片，则需要将加载的瓦片的高度信息传递给填充的瓦片。
+   - 调用 `TerrainFillMesh.updateFillTiles` 方法更新填充瓦片的高度信息。
+
+3. **处理垂直夸张变化**：
+   - 检测垂直夸张是否发生了变化，如果发生了变化，则需要更新加载的瓦片的地形夸张效果。
+   - 遍历加载的瓦片，调用 `updateExaggeration` 方法更新瓦片的地形夸张效果。
+
+4. **生成绘制命令**：🌟
+   - 根据瓦片的纹理数量和加载状态，为每个瓦片生成绘制命令，并添加到渲染命令列表中。
+   - 遍历 `tilesToRenderByTextureCount` 数组，对每个纹理贴图数量对应的瓦片列表进行处理，为每个瓦片生成绘制命令，并更新当前帧的最小地形高度。
+```
+
+
+
+<img src="https://github.com/githubli1123/CesiumExampleCollection/blob/main/Img/02Cesium%E7%9A%84%E5%9C%B0%E7%90%83%E6%B8%B2%E6%9F%93%E8%BF%87%E7%A8%8B/%E4%B8%80%E6%AD%A5%E4%B8%80%E6%AD%A5%E6%89%BE%E5%88%B0%E5%9C%B0%E7%90%83%E6%B8%B2%E6%9F%93%E7%9B%B8%E5%85%B3%E5%87%BD%E6%95%B0-%E8%AF%A5%E5%9B%BE%E5%8F%AF%E5%9C%A8%E8%AF%A5%E9%A1%B9%E7%9B%AE%E4%B8%AD%E6%89%BE%E5%88%B0.png?raw=true" style="zoom:67%;" />
+
+
+
+```js
+  this._surface = new QuadtreePrimitive({
+    tileProvider: new GlobeSurfaceTileProvider({
+      terrainProvider: terrainProvider,
+      imageryLayers: imageryLayerCollection,
+      surfaceShaderSet: this._surfaceShaderSet,
+    }),
+  });
+```
+
+
+
+
+

@@ -1,4 +1,8 @@
-🎯正在梳理cesium源码第二篇章......
+对于该项目文件夹的介绍可以查看看 [ps.txt](https://github.com/githubli1123/CesiumExampleCollection/blob/main/ps.txt) 。
+
+才学识浅，写的一般。
+
+🎯正在梳理第二篇章和重温《WebGL编程指南》这本书......
 
 # Cesium 源码解读
 

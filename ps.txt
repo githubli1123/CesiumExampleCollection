@@ -1,1 +1,17 @@
-lib为cesium源码备份
+./cesiumExampleCollection ：Cesium项目简单示例与文档汇总
+	./cesiumExampleCollection/readme.md：Cesium简单示例的使用指南
+	./cesiumExampleCollection/📝docs：Cesium相关的各类文档
+
+./lib：cesium源码备份
+
+./CodeResource&Note - book WebGL Programming Guide：《WebGL编程指南》书籍、练习代码与文图总结文档
+
+./Design Patterns Note：设计模式练习代码与文图总结文档
+
+./Front End Note：前端各类文档
+
+./Img：文档图片的资源文件夹
+
+./Other：其他，暂时不分类
+
+./Temp：暂时存放文档和代码，后续会归类到前面的类别中

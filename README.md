@@ -237,8 +237,9 @@ viewer.scene.preRender.addEventListener(()=>{
 
 - 用户的动作（如 点击鼠标、按下键盘等）
 - 系统状态变化（如 网络请求完成、定时器到期等）
-- 生命周期钩子（如 单帧渲染过程中按数据更新与渲染这两个重要过程细化的四个事件：preUpdate、preRender、postUpdate、postRender🔢 ）
+- 生命周期（如 单帧渲染过程中按数据更新与渲染这两个重要过程细化的四个事件：preUpdate、preRender、postUpdate、postRender🔢 ）
 - 其他对象的状态改变（如 Entity 属性的改变、Entity 的增加等）
+- ......
 
 事件处理器：为该事件注册的回调函数，事件触发后由其处理。
 

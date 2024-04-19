@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>02使用WebGL绘制一个点</title>
+</head>
+<body>
+    <canvas id="webgl" width="400" height="400" style="border: 1px solid #000;">
+        你的浏览器不支持WebGL
+    </canvas>
+
+    <script>
+        function main() {
+            let canvas = document.getElementById('webgl');
+            if(!canvas){}
+            let gl = canvas.getContext('webgl');
+        }
+    </script>
+</body>
+</html>

@@ -270,6 +270,20 @@ a.zhihu = 100;
 
 
 
+## ES6函数剩余参数（Rest Parameters)
+
+
+
+参考资料：
+
+
+
+
+
+
+
+
+
 ## Promise
 
 下面文章

@@ -268,6 +268,10 @@ a.zhihu = 100;
 
 
 
+## 11
+
+浏览器控制台出现 `[Violation] 'setTimeout' handler took 56ms`
+
 
 
 ## ES6函数剩余参数（Rest Parameters)

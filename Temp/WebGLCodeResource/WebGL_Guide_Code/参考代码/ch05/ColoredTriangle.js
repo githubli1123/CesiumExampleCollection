@@ -1,3 +1,9 @@
+/*
+ * @Author: ZJ Wu
+ * @Date: 2023-12-11 17:06:05
+ * @LastEditTime: 2024-04-22 10:03:10
+ * @Description: 
+ */
 // ColoredTriangle.js (c) 2012 matsuda
 // Vertex shader program
 var VSHADER_SOURCE = 
@@ -11,9 +17,9 @@ var VSHADER_SOURCE =
 
 // Fragment shader program
 var FSHADER_SOURCE = 
-  '#ifdef GL_ES\n' +
+  // '#ifdef \n' +
   'precision mediump float;\n' +
-  '#endif GL_ES\n' +
+  // '#endif \n' +
   'varying vec4 v_Color;\n' +
   'void main() {\n' +
   '  gl_FragColor = v_Color;\n' +

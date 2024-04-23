@@ -1,9 +1,13 @@
 <!--
  * @Author: ZJ Wu
  * @Date: 2024-04-22 09:55:10
- * @LastEditTime: 2024-04-23 15:15:05
- * @Description: 🤔思考一下为什么不是矩形
-                 🤔思考一下为什么需要等一会才会背景变黑，出现图片
+ * @LastEditTime: 2024-04-23 15:44:27
+ * @Description: 问题在于 image.onload 不是同步的，所以无法保证在渲染前 image 已经加载完成。
+    解决方法：
+    1. 让 render() 与 loadTexture() 变为同步。在 image.onload 完成后先后调用loadTexture()和渲染函数render()。
+    2. 使用异步操作，例如使用 Promise 或 async/await。在 image.onload 完成后，
+       使用 Promise 或者 async/await 等待 loadTexture() 完成后再调用 render()。
+    3. 使用 Web Worker 或其他异步方式，将加载纹理的操作放在一个单独的线程中，并在加载完成后通知主线程继续执行。
 -->
 <!DOCTYPE html>
 <html lang="en">
@@ -11,7 +15,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>纹理映射</title>
+    <title>纹理映射-异步</title>
     <script src="../lib/webgl-utils.js"></script>
     <script src="../lib/webgl-debug.js"></script>
     <script src="../lib/cuon-utils.js"></script>
@@ -39,7 +43,7 @@
             }
         `;
 
-        function main() {
+        async function main() {
             let canvas = document.getElementById('webgl');
             let gl = getWebGLContext(canvas);
 
@@ -49,11 +53,8 @@
             // 由缓冲区传输给 顶点着色器 点位置和纹理位置
             // 由varying变量传输给 片元着色器 纹理位置再从纹理图像采样
             const num = initBuffer(gl);
-            initTextures(gl, num);
-
-            // 绘制前准备工作
-            gl.clearColor(0.0, 0.0, 0.0, 1.0);
-
+            await initTextures(gl, num);
+            await render(gl,num);
         }
 
 
@@ -70,8 +71,6 @@
             const n = 4;// 顶点数
             const a_Position = gl.getAttribLocation(gl.program, 'a_Position');
             const a_TexCoord = gl.getAttribLocation(gl.program, 'a_TexCoord');
-
-
             // 缓冲区五大步骤
             const vertexBuffer = gl.createBuffer();
             gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
@@ -80,26 +79,19 @@
             gl.vertexAttribPointer(a_TexCoord, 2, gl.FLOAT, false, FSIZE * 4, FSIZE * 2);
             gl.enableVertexAttribArray(a_Position);
             gl.enableVertexAttribArray(a_TexCoord);
-
-
             // 清理
             gl.bindBuffer(gl.ARRAY_BUFFER, null);
-
             return n;
         }
-        function initTextures(gl, n) {
+        async function initTextures(gl, n) {
             let texture = gl.createTexture();
-
-            // Get the storage location of u_Sampler
             let u_Sampler = gl.getUniformLocation(gl.program, 'u_Sampler');
-
             let image = new Image();  // Create the image object
-
-            // Register the event handler to be called on loading an image
+            
+            // 
             image.onload = function () {
-                setTimeout(() => {
-                    loadTexture(gl, n, texture, u_Sampler, image);
-                }, 2000);
+                console.log('onloaded');
+                loadTexture(gl, n, texture, u_Sampler, image);
             };
             image.src = './rainbow.jpeg';
             // image.src = 
@@ -114,20 +106,21 @@
         function loadTexture(gl, n, texture, u_Sampler, image) {
             gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, 1); // 对纹理图像进行y轴反转
             gl.activeTexture(gl.TEXTURE0);
-            // Bind the texture object to the target
             gl.bindTexture(gl.TEXTURE_2D, texture);
-
-            // Set the texture parameters
             gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-            // Set the texture image
             gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, image);
-
-            // Set the texture unit 0 to the sampler
             gl.uniform1i(u_Sampler, 0);
+            gl.clear(gl.COLOR_BUFFER_BIT);
+        }
 
-            gl.clear(gl.COLOR_BUFFER_BIT);   // 绘制前准备工作
+        async function render(gl,num){
+            console.log('start render')
+            // 绘制前准备工作
+            gl.clearColor(0.0, 0.0, 0.0, 1.0);
+            gl.clear(gl.COLOR_BUFFER_BIT);
 
-            gl.drawArrays(gl.TRIANGLE_STRIP, 0, n); // Draw the rectangle
+            // 渲染 render
+            gl.drawArrays(gl.TRIANGLE_STRIP, 0, num);
         }
 
         main();

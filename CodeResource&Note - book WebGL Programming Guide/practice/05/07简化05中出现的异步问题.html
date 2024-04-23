@@ -1,0 +1,50 @@
+<!--
+ * @Author: ZJ Wu
+ * @Date: 2024-04-22 09:55:10
+ * @LastEditTime: 2024-04-23 15:47:28
+ * @Description: 
+-->
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>异步</title>
+</head>
+
+<body>
+    <script>
+
+        // 下面的代码执行顺序和同步代码没有任何区别
+        async function main() {
+            await initTextures();
+            await render();
+        }
+
+        async function initTextures() {
+            let image = new Image();  // Create the image object
+
+            image.onload = function () {
+                console.log('onloaded');
+                loadTexture();
+            };
+            image.src = './rainbow.jpeg';
+
+            return true;
+        }
+
+        function loadTexture() {
+            console.log('loadTexture');
+        }
+
+        async function render(){
+            console.log('start render')
+        }
+
+        main();
+
+    </script>
+</body>
+
+</html>

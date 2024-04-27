@@ -3,7 +3,8 @@
  * @Date: 2024-04-26 11:03:15
  * @LastEditTime: 2024-04-26 17:07:37
  * @Description: 难以理解的事情：
-                    ✨buffer 数据中的点出现的顺序就是绘制的顺序，需要注意。
+                    buffer 数据中的点出现的顺序就是绘制的顺序
+                    但是每个三角形的深度信息是z值，修改可视空间范围后，会有“反直觉”现象发生。
 -->
 <!DOCTYPE html>
 <html lang="en">
@@ -11,7 +12,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>04改变盒式可视空间</title>
+    <title>5改变盒式可视空间宽高比</title>
     <script src="../lib/webgl-utils.js"></script>
     <script src="../lib/webgl-debug.js"></script>
     <script src="../lib/cuon-utils.js"></script>
@@ -61,7 +62,12 @@
         function initBuffer(gl) {
             let verticesColors = new Float32Array([
                 // Vertex coordinates and color(RGBA)
-                // x, y, r, g, b, a
+                // x, y, z, g, b, a
+                0.1, 0.4, 0.0, 1.0, 0, 0, // 红 
+                -0.4, -0.6, 0.0, 1.0, 0, 0,
+                0.6, -0.6, 0.0, 1.0, 0, 0,
+
+
                 0.0, 0.5, -0.4, 0, 0, 1.0,  // 蓝
                 -0.5, -0.5, -0.4, 0, 0, 1.0,
                 0.5, -0.5, -0.4, 0, 0, 1.0,
@@ -71,9 +77,7 @@
                 -0.5, 0.4, -0.2, 0, 1.0, 0,
                 0.0, -0.6, -0.2, 0, 1.0, 0,
 
-                0.0, 0.5, 0.0, 1.0, 0, 0, // 红 
-                -0.5, -0.5, 0.0, 1.0, 0, 0,
-                0.5, -0.5, 0.0, 1.0, 0, 0,
+                
             ]);
             let vertexNum = 9;
             const FSIZE = verticesColors.BYTES_PER_ELEMENT;
@@ -99,7 +103,7 @@
         function initOrthoView(gl) {
             const u_ProjMatrix = gl.getUniformLocation(gl.program, 'u_ProjMatrix');
             const projMatrix = new Matrix4();
-            projMatrix.setOrtho(-1, 1, -1, 1, g_near, g_far);
+            projMatrix.setOrtho(-1, 1, -0.75, 0.75, g_near, g_far);
             gl.uniformMatrix4fv(u_ProjMatrix, false, projMatrix.elements);
         }
 

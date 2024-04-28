@@ -92,10 +92,11 @@
             gl.vertexAttribPointer(a_Color, 3, gl.FLOAT, false, FSIZE * 6, FSIZE * 3);
             gl.enableVertexAttribArray(a_Position);
             gl.enableVertexAttribArray(a_Color);
-
             // 顶点索引缓冲区 bind 和 write data
             gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
             gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, indices, gl.STATIC_DRAW);
+
+            // 解绑
             gl.bindBuffer(gl.ARRAY_BUFFER, null);
 
             return indices.length;

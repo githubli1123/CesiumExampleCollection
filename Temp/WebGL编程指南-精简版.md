@@ -39,17 +39,17 @@ WebGL 依赖一种着色器的绘制机制。
 
 WebGL提供了一种很方便的机制，即缓冲区对象(buffer object)，它可以一次性地向着色器传入多个顶点的数据。缓冲区对象是 WebGL系统中的一块内存区域，我们可以一次性地向缓冲区对象中填充大量的顶点数据，然后将这些数据保存在其中，供顶点着色器使用。
 
-<img src="E:\AProject\CesiumExampleCollection\Img\WebGL编程指南-精简版\使用缓冲区.png" alt="使用缓冲区"  />
+<img src="../Img/WebGL编程指南-精简版/使用缓冲区.png" alt="使用缓冲区"  />
 
 注意，开启attribute 变量后,你就不能再用 `gl.vertexAttrib[1234]f()`向它传数据了。除非你显式地关闭该 attribute 变量。实际上，你无法 (也不应该) 同时使用 `gl.vertexAttribPointer()` 和 `gl.vertexAttrib[1234]f()` 这两个函数。
 
-<img src="E:\AProject\CesiumExampleCollection\Img\WebGL编程指南-精简版\顶点着色器执行过程中缓冲区数据的传输过程.png" alt="顶点着色器执行过程中缓冲区数据的传输过程"  />
+<img src="../Img/WebGL编程指南-精简版/顶点着色器执行过程中缓冲区数据的传输过程.png" alt="顶点着色器执行过程中缓冲区数据的传输过程"  />
 
 
 
 WebGL 可以绘制的基本图像如下，借助API `gl.drawArrays()` 绘制。
 
-<img src="E:\AProject\CesiumExampleCollection\Img\WebGL编程指南-精简版\WebGL可以绘制的基本图像.png" alt="WebGL可以绘制的基本图像"  />
+<img src="../Img/WebGL编程指南-精简版/WebGL可以绘制的基本图像.png" alt="WebGL可以绘制的基本图像"  />
 
 但是，这个最简单的例子中数据在第四步中的赋值可是大有文章。数据如何动态的赋给 a_position 是需要一些步骤的。需要借助缓冲区对象，流程如下：
 
@@ -64,7 +64,7 @@ WebGL 可以绘制的基本图像如下，借助API `gl.drawArrays()` 绘制。
 
 仔细观察 将绑定到gl.ARRAY_BUFFER的缓冲区对象分配给指定attribute变量 这个函数
 
-<img src="E:\AProject\CesiumExampleCollection\Img\WebGL编程指南-精简版\将绑定到gl.ARRAY_BUFFER的缓冲区对象分配给指定attribute变量.png" alt="将绑定到gl.ARRAY_BUFFER的缓冲区对象分配给指定attribute变量"  />
+<img src="../Img/WebGL编程指南-精简版/将绑定到gl.ARRAY_BUFFER的缓冲区对象分配给指定attribute变量.png" alt="将绑定到gl.ARRAY_BUFFER的缓冲区对象分配给指定attribute变量"  />
 
 
 
@@ -72,7 +72,7 @@ WebGL 可以绘制的基本图像如下，借助API `gl.drawArrays()` 绘制。
 
 **一个模型可能经过了多次变换，将这些变换全部复合成一个等效的变换，就得到了模型变换，模型变换的矩阵称为模型矩阵。上式中（旋转矩阵\*平移矩阵）就称为模型矩阵**
 
-<img src="E:\AProject\CesiumExampleCollection\Img\WebGL编程指南-精简版\平移旋转.png" alt="平移旋转"  />
+<img src="../Img/WebGL编程指南-精简版/平移旋转.png" alt="平移旋转"  />
 
 上图的情况不太理解。破案了，是 cuon-matrix.js 工具函数的锅，似乎不能叠加变换，以求得模型矩阵 Model Matrix。
 
@@ -84,15 +84,15 @@ WebGL 可以绘制的基本图像如下，借助API `gl.drawArrays()` 绘制。
 
 ### 1 非坐标数据传入顶点着色器
 
-<img src="E:\AProject\CesiumExampleCollection\Img\WebGL编程指南-精简版\使用两个缓冲区对象向顶点着色器传输数据.png" alt="使用两个缓冲区对象向顶点着色器传输数据"  />
+<img src="../Img\WebGL编程指南-精简版/使用两个缓冲区对象向顶点着色器传输数据.png" alt="使用两个缓冲区对象向顶点着色器传输数据"  />
 
 ### 2 几何形状的显示之varying 变量的作用 （由绘制彩色三角形例子引出）
 
-<img src="E:\AProject\CesiumExampleCollection\Img\WebGL编程指南-精简版\几何形状的装配与光栅化.png" alt="几何形状的装配与光栅化"  />
+<img src="../Img/WebGL编程指南-精简版/几何形状的装配与光栅化.png" alt="几何形状的装配与光栅化"  />
 
 
 
-<img src="E:\AProject\CesiumExampleCollection\Img\WebGL编程指南-精简版\几何形状的装配与光栅化2.png" alt="几何形状的装配与光栅化2"  />
+<img src=../Img/WebGL编程指南-精简版/几何形状的装配与光栅化2.png" alt="几何形状的装配与光栅化2"  />
 
 
 
@@ -110,7 +110,7 @@ WebGL 可以绘制的基本图像如下，借助API `gl.drawArrays()` 绘制。
 
 第 5步:显示在屏幕上的三角形是由片元(像素) 组成的，所以还需要将图形转化为片元，这个过程被称为光栅化(rasterization)。光栅化之后，我们就得到了组成这个三角形的所有片元。在图 5.11 中的最后一步，你可以看到光栅化后得到的组成三角形的片元。
 
-<img src="E:\AProject\CesiumExampleCollection\Img\WebGL编程指南-精简版\几何形状的装配与光栅化过程.png" alt="几何形状的装配与光栅化过程"  />
+<img src="../Img/WebGL编程指南-精简版/几何形状的装配与光栅化过程.png" alt="几何形状的装配与光栅化过程"  />
 
 
 
@@ -118,7 +118,7 @@ WebGL 可以绘制的基本图像如下，借助API `gl.drawArrays()` 绘制。
 
 一旦光栅化过程结束后，程序就开始逐片元调用片元着色器。在图 5.12 中，片元着色器被调用了 10次每调用一次,就处理一个片元(为了整洁,图5.12 省略了中间步骤)对于每个片元，片元着色器计算出该片元的颜色，并写入颜色缓冲区。直到第15 步最后一个片元被处理完成，浏览器就会显示出最终的结果。
 
-<img src="E:\AProject\CesiumExampleCollection\Img\WebGL编程指南-精简版\调用片元着色器.png" alt="调用片元着色器"  />
+<img src="../Img/WebGL编程指南-精简版/调用片元着色器.png" alt="调用片元着色器"  />
 
 小知识：
 
@@ -274,6 +274,23 @@ MVP：模型视图投影矩阵：投影矩阵 * 视图矩阵 * 模型矩阵
 <img src="../Img/WebGL编程指南-精简版/环境反射.png" alt="环境反射"  />
 
 <img src="../Img/WebGL编程指南-精简版/环境反射2.png" alt="环境反射2"  />
+
+计算入射角
+
+```
+cosA = < 光线方向 > · < 法线方向 > 
+点积运算，归一化
+```
+
+
+
+
+
+
+
+
+
+
 
 ## 09 层次模型
 

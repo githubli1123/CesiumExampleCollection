@@ -2,7 +2,7 @@
 
 才疏学浅，写的一般。
 
-🎯正在拜读《WebGL高级编程》、梳理第二篇章和重温《WebGL编程指南》这本书......
+🎯正在拜读《3D Engine Design for Virtual Globes》、《实时计算机图形学第2版》，重温《WebGL高级编程》这本书，佛系梳理第二章内容（尽量在5月份完成）......
 
 # Cesium 源码解读
 
@@ -12,7 +12,7 @@
 
 01 Cesium的渲染调度  [👉🔗](https://github.com/githubli1123/CesiumExampleCollection/blob/main/Temp/%E9%9C%80%E8%A6%81%E5%8F%91%E5%B8%83%E7%9A%84%E5%8D%9A%E5%AE%A2/01Cesium%E7%9A%84%E6%B8%B2%E6%9F%93%E8%B0%83%E5%BA%A6/01Cesium%E7%9A%84%E6%B8%B2%E6%9F%93%E8%B0%83%E5%BA%A6.md)
 
-
+02 Cesium中地球渲染的过程 [👉🔗](https://github.com/githubli1123/CesiumExampleCollection/blob/main/Temp/%E9%9C%80%E8%A6%81%E5%8F%91%E5%B8%83%E7%9A%84%E5%8D%9A%E5%AE%A2/02Cesium%E7%9A%84%E5%9C%B0%E7%90%83%E6%B8%B2%E6%9F%93%E8%BF%87%E7%A8%8B/02Cesium%E7%9A%84%E5%9C%B0%E7%90%83%E6%B8%B2%E6%9F%93%E8%BF%87%E7%A8%8B.md)
 
 ## 00 文章目录与源码的简单调试
 
@@ -292,7 +292,7 @@ Cesium 的渲染循环，是在实例化 `Viewer` 时实例化了 `CesiumWidget`
 
 
 
-## 02 Cesium的地球渲染过程
+## 02 Cesium中的地球渲染
 
 需要一段时间梳理
 
@@ -332,7 +332,7 @@ Globe.prototype.beginFrame 这个方法主要做了以下事情：
 
 
 【思考 单一职责】当执行到surface.beginFrame这个函数时，渲染任务是 地球表面的影像皮肤，地球的地形骨架不在这里出现。单一职责嘛。
-影像皮肤在这一帧中是如何下载、如何解析、如何投影、如何渲染、如何回退的？初学者不要试图理解函数执行顺序，只有经验足够的人
+影像皮肤在这一帧中是如何下载、如何解析、如何投影、如何渲染、如何回退的？胡言乱语：初学者不要试图理解函数执行顺序，只有经验足够的人
 才可以在纷繁复杂的函数执行中提炼出流程是如何设计的，我们目前是需要借助他人的理解，再加上自己对源码的阅读来提炼流程设计的奥秘。
 
 surface.beginFrame(frameState);  *Initializes values for a new render frame and prepare the tile load queue.*
@@ -365,7 +365,7 @@ surface.beginFrame(frameState);  *Initializes values for a new render frame and 
 
 解析、投影、下载、渲染、回退。但是这个流程的任务被细化并拆分到 beginFrame、updateAndExecuteCommands、endFrame 这三个阶段中。
 
-既然散落在各处，但我相信 Cesium 会把这些东西给合理安排的。接下来看 下载、解析、投影、渲染、回退 流程在beginFrame中有怎么体现
+既然散落在各处，但我相信 Cesium 会把这些东西给合理安排的。接下来看 下载、解析、投影、渲染、回退 流程在beginFrame中有怎么体现，需要借助《3D Engine Design for Virtual Globes》这本书来梳理和归纳。
 
 ===胡思乱想
 

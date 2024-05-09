@@ -1,10 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="84fe3695-f37e-4894-a668-f797a6e1ed58" name="更改" comment="">
-      <change beforePath="$PROJECT_DIR$/CodeResource&amp;Note - book WebGL Programming Guide/practice/07/04改变盒式可视空间（纯净版）.html" beforeDir="false" afterPath="$PROJECT_DIR$/CodeResource&amp;Note - book WebGL Programming Guide/practice/07/04改变盒式可视空间（纯净版）.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Temp/WebGL编程指南-精简版.md" beforeDir="false" afterPath="$PROJECT_DIR$/Temp/WebGL编程指南-精简版.md" afterDir="false" />
-    </list>
+    <list default="true" id="84fe3695-f37e-4894-a668-f797a6e1ed58" name="更改" comment="" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -16,9 +13,9 @@
   <component name="MarkdownSettingsMigration">
     <option name="stateVersion" value="1" />
   </component>
-  <component name="ProjectColorInfo"><![CDATA[{
-  "associatedIndex": 7
-}]]></component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 7
+}</component>
   <component name="ProjectId" id="2ffQyQ561891vW2qOb9KWDqqYPk" />
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
@@ -31,6 +28,7 @@
     "WebServerToolWindowFactoryState": "false",
     "git-widget-placeholder": "main",
     "nodejs_package_manager_path": "npm",
+    "settings.editor.selected.configurable": "preferences.pluginManager",
     "vue.rearranger.settings.migration": "true"
   }
 }]]></component>
@@ -43,6 +41,7 @@
       <option name="presentableId" value="Default" />
       <updated>1714189906161</updated>
       <workItem from="1714189907457" duration="54000" />
+      <workItem from="1715217228063" duration="102000" />
     </task>
     <servers />
   </component>

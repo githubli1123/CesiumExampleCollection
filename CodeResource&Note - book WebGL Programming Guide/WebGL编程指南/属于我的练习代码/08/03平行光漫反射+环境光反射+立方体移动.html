@@ -56,14 +56,14 @@
             initShaders(gl, VSHADER_SOURCE, FSHADER_SOURCE);
 
             const n = initVertexBuffers(gl);
+            gl.enable(gl.DEPTH_TEST);
 
-            
 
             /*======================================= 新增 ===========================================*/
             addDirectionalLight(gl);
             addAmbientLight(gl);
             /*===*/
-setMVPMatrix(gl, canvas);
+            setMVPMatrix(gl, canvas);
             draw(gl, n);
         }
 
@@ -160,17 +160,75 @@ setMVPMatrix(gl, canvas);
             normalMatrix.transpose();
             gl.uniformMatrix4fv(u_NormalMatrix, false, normalMatrix.elements);
         }
-        function setMVPMatrix(gl, canvas, normalMatrix) {
-            const modelMatrix = initModelMatrix(gl),
-                viewMatrix = initViewMatrix(gl),
-                projMatrix = initProjMatrix(gl, canvas),
-                u_MVPMatrix = gl.getUniformLocation(gl.program, 'u_MVPMatrix'),
-                mvpMatrix = new Matrix4();
-            // 矩阵运算
-            mvpMatrix.set(projMatrix).multiply(viewMatrix).multiply(modelMatrix);
-            gl.uniformMatrix4fv(u_MVPMatrix, false, mvpMatrix.elements);
+        function setMVPMatrix(gl, canvas) {
+            // // 🏷️代码块1：执行会无法显示立方体
+            // const modelMatrix = initModelMatrix(gl),
+            //     viewMatrix = initViewMatrix(gl),
+            //     projMatrix = initProjMatrix(gl, canvas),
+            //     u_MVPMatrix = gl.getUniformLocation(gl.program, 'u_MVPMatrix'),
+            //     mvpMatrix = new Matrix4();
+            // // 矩阵运算
+            // mvpMatrix.set(projMatrix).multiply(viewMatrix).multiply(modelMatrix);
+            // console.log(mvpMatrix);
+            // gl.uniformMatrix4fv(u_MVPMatrix, false, mvpMatrix.elements);
+            // initNormalMatrix(gl, modelMatrix);
 
-            initNormalMatrix(gl, modelMatrix);
+
+            // // 🏷️代码块2：可以正确显示，但是非常暗
+            // // Get the storage locations of uniform variables
+            // function a(gl, canvas) {
+            //     const u_MvpMatrix = gl.getUniformLocation(gl.program, 'u_MvpMatrix');
+            //     const modelMatrix = new Matrix4();  // Model matrix
+            //     const mvpMatrix = new Matrix4();    // Model view projection matrix
+            //     // Calculate the model matrix
+            //     modelMatrix.setTranslate(0, 0.9, 0); // Translate to the y-axis direction
+            //     modelMatrix.rotate(90, 0, 0, 1);     // Rotate 90 degree around the z-axis
+            //     // Calculate the view projection matrix
+            //     mvpMatrix.setPerspective(30, canvas.width / canvas.height, 1, 100);
+            //     mvpMatrix.lookAt(3, 3, 7, 0, 0, 0, 0, 1, 0);
+            //     mvpMatrix.multiply(modelMatrix);
+            //     console.log(mvpMatrix);
+            //     // Pass the model view projection matrix to u_MvpMatrix
+            //     gl.uniformMatrix4fv(u_MvpMatrix, false, mvpMatrix.elements);
+            //     return modelMatrix;
+            // }
+
+            // function b(gl, modelMatrix) {
+            //     const u_NormalMatrix = gl.getUniformLocation(gl.program, 'u_NormalMatrix');
+            //     const normalMatrix = new Matrix4(); // Transformation matrix for normals
+            //     // Calculate the matrix to transform the normal based on the model matrix
+            //     normalMatrix.setInverseOf(modelMatrix);
+            //     normalMatrix.transpose();
+            //     // Pass the transformation matrix for normals to u_NormalMatrix
+            //     gl.uniformMatrix4fv(u_NormalMatrix, false, normalMatrix.elements);
+            // }
+            // return modelMatrix = a(gl, canvas);
+            // b(gl, modelMatrix);
+
+
+            // 🏷️代码块3：可以正常显示
+            const u_MvpMatrix = gl.getUniformLocation(gl.program, 'u_MvpMatrix');
+            const modelMatrix = new Matrix4();  // Model matrix
+            const mvpMatrix = new Matrix4();    // Model view projection matrix
+            // Calculate the model matrix
+            modelMatrix.setTranslate(0, 0.9, 0); // Translate to the y-axis direction
+            modelMatrix.rotate(90, 0, 0, 1);     // Rotate 90 degree around the z-axis
+            // Calculate the view projection matrix
+            mvpMatrix.setPerspective(30, canvas.width / canvas.height, 1, 100);
+            mvpMatrix.lookAt(3, 3, 7, 0, 0, 0, 0, 1, 0);
+            mvpMatrix.multiply(modelMatrix);
+            console.log(mvpMatrix);
+            // Pass the model view projection matrix to u_MvpMatrix
+            gl.uniformMatrix4fv(u_MvpMatrix, false, mvpMatrix.elements);
+
+
+            const u_NormalMatrix = gl.getUniformLocation(gl.program, 'u_NormalMatrix');
+            const normalMatrix = new Matrix4(); // Transformation matrix for normals
+            // Calculate the matrix to transform the normal based on the model matrix
+            normalMatrix.setInverseOf(modelMatrix);
+            normalMatrix.transpose();
+            // Pass the transformation matrix for normals to u_NormalMatrix
+            gl.uniformMatrix4fv(u_NormalMatrix, false, normalMatrix.elements);
         }
 
         /**
@@ -192,7 +250,7 @@ setMVPMatrix(gl, canvas);
 
         function draw(gl, n) {
             gl.clearColor(0.0, 0.0, 0.0, 1.0);
-            gl.enable(gl.DEPTH_TEST); // 若不开启深度测试，会导致后绘制的立方体面覆盖前绘制的立方体面
+            // gl.enable(gl.DEPTH_TEST); // 若不开启深度测试，会导致后绘制的立方体面覆盖前绘制的立方体面
             gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
             gl.drawElements(gl.TRIANGLES, n, gl.UNSIGNED_BYTE, 0);
         }

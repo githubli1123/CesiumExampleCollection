@@ -230,11 +230,11 @@ var program = createProgram(gl, vertexShader, fragmentShader);
 
 
 
-⑥  为 GLSL程序 提供数据
+⑥  为 GLSL程序 提供数据（缓冲区的五大步骤）
 
 6.1  查找属性
 
-在GPU上已经创建了一个GLSL程序后，我们还需要提供数据给它。大多数WebGL API是有关设置状态来供给GLSL程序数据的。 在我们的例子中，GLSL程序唯一的输入属性是`a_position`。我们做的第一件事就是查找到这个属性。记住在查找属性是在**程序初始化的时候**，而**不是render循环**的时候。
+在GPU上已经创建了一个GLSL程序后，我们还需要提供数据给它。大多数WebGL API是有关设置状态来供给GLSL程序数据的。 在我们的例子中，GLSL 程序唯一的**输入属性**是`a_position`。我们做的第一件事就是查找到这个属性。记住在**查找属性**是在**程序初始化的时候**，而**不是render循环**的时候。
 
 ```javascript
 var positionAttributeLocation = gl.getAttribLocation(program, "a_position");// 查找属性
@@ -256,11 +256,13 @@ WebGL通过 `绑定点` 来处理许多WebGL资源。你可以认为 `绑定点`
 gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
 ```
 
+
+
 6.4  数据存放到 GPU 缓冲区
 
 现在我们通过绑定点把数据存放到缓冲区。
 
-解释一下下面的代码：Javascript 弱类型语言，而 WebGL 需要强类型数据，需要用`new Float32Array(positions)`创建32位的浮点数数组，然后用`gl.bufferData`函数将数组数据**拷贝到GPU上的`positionBuffer`里面**。因为前面已经把`positionBuffer`绑定到了`ARRAY_BUFFER`，所以我们可以直接使用 `绑定点` （*读者注：相当于快捷键？*）。最后一个参数`gl.STATIC_DRAW`提示 WebGL 如何使用数据，WebGL 据此做相应的优化。`gl.STATIC_DRAW` 告诉 WebGL 我们不太可能去改变数据的值。
+解释一下下面的代码：Javascript 弱类型语言，而 WebGL 需要强类型数据，需要用`new Float32Array(positions)`创建32位的浮点数数组，然后用`gl.bufferData`函数将数组数据**拷贝到GPU上的`positionBuffer`里面**。因为前面已经把`positionBuffer`绑定到了`ARRAY_BUFFER`，所以我们可以直接使用 `绑定点` 。最后一个参数`gl.STATIC_DRAW`提示 WebGL 如何使用数据，WebGL 据此做相应的优化。`gl.STATIC_DRAW` 告诉 WebGL 我们不太可能去改变数据的值。
 
 ```JavaScript
 // three 2d points
@@ -274,13 +276,13 @@ gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positions), gl.STATIC_DRAW);
 
 6.5  属性从 GPU 缓冲区中拿到数据
 
-数据存放到缓存区后，接下来需要告诉属性如何从缓冲区拿到数据。首先，我需要创建属性状态集合：顶点数组对象(Vertex Array Object)。
+数据存放到缓存区后，接下来需要告诉属性如何从缓冲区拿到数据。首先，我需要创建 **属性状态集合**：顶点数组对象(Vertex Array Object、**VAO**)。
 
 ```
 var vao = gl.createVertexArray();
 ```
 
-为了使所有属性的设置能够应用到WebGL属性状态集，我们需要绑定这个 `vao`（顶点数组对象实例） 到 `gl`（上下文实例）。
+为了使所有属性的设置能够应用到 **WebGL 属性状态集**，我们需要绑定这个 `vao`（顶点数组对象实例） 到 `gl`（上下文实例）。
 
 ```
 gl.bindVertexArray(vao);
@@ -312,21 +314,66 @@ in vec4 a_position;
 
 `vec4`是一个浮点型的数。以 javascript 来看，你可以认为它是这样的`a_position = {x: 0, y: 0, z: 0, w: 0}`。我们设置`size = 2`, 属性值被设置为`0, 0, 0, 1`。 属性获取前两个坐标值(x和y) ,z和w分别被默认设置为0和1。
 
+> 📌*读者注：* 这个第⑥步所涉及的概念和API还是比较多的，推荐去搭配着 [这个WebGL执行可视化网站](https://webgl2fundamentals.org/webgl/lessons/resources/webgl-state-diagram.html?exampleId=triangle#no-help) 和 [OpenGL中文书](https://learnopengl-cn.github.io/01%20Getting%20started/04%20Hello%20Triangle/) 去理解。
+>
+> 为什么需要使用 VAO，即使删去与 VAO 相关的代码，三角形依然可以绘制。有待补充。
+>
+> [ 如何正确理解 opengl 的 vao ？ - 知乎 (zhihu.com)](https://www.zhihu.com/question/30095978/answer/3272566422)
 
 
 
+⑦ 画布大小与显示区域相匹配
+
+在绘制之前，画布大小要设置成显示区域的大小。画布就像一个2维的图片，长和宽的单位为像素个数， **CSS**确定显示画布的大小。 **你应该通过CSS设置画布的大小**，因为它比其他方法灵活得多。
+
+（为了让画布大小匹配显示区域的大小，我通常使用这个[帮助函数](https://webgl2fundamentals.org/webgl/lessons/zh_cn/webgl-resizing-the-canvas.html))。
+
+在我们的例子中，如果程序运行在自己独立的窗口中，画布大小被固定设置为400x300；如果作为iframe嵌在页面在，画布会尽量扩展到可用的空间。
+
+```
+webglUtils.resizeCanvasToDisplaySize(gl.canvas);
+```
+
+通过设置`gl_Position`, 我们需要告诉WebGL如何从剪辑空间转换值转换到屏幕空间。 为此，我们调用`gl.viewport`并将其传递给画布的当前大小。
+
+```
+gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
+```
+
+这行代码告诉WebGL将裁剪空间的 -1~+1 映射到x轴 0~`gl.canvas.width`和y轴 0~`gl.canvas.height`。
+
+我们设置画布的清空颜色为`0,0,0,0`(分别表示为红色，绿色，蓝色，透明度)。所以这个画布是透明的。
+
+由于顶点着色器只是简单地从positionBuffer中拷贝值到`gl_position`, 最终画出的三角形也会在裁剪空间区域。
+
+```
+第一个点：  0, 0,  
+第二个点：  0, 0.5,  
+第三个点：  0.7, 0,
+```
+
+如果画布大小恰好是400X300, 裁剪空间坐标转换成屏幕坐标如下所示：
+
+```
+ clip space      screen space   
+ 0, 0       ->   200, 150   
+ 0, 0.5     ->   200, 225 
+ 0.7, 0     ->   340, 150
+```
+
+WebGL会用这三个顶点画出三角形。对于每个像素，WebGL调用片段着色器。片段着色器设置`outColor`为`1, 0, 0.5, 1`，加上画布上每个channel为8bit，WebGL把颜色值`[255, 0, 127, 255]`的像素写到画布。
 
 
 
-。。。一大片有待书写
+从上面例子看出，顶点着色器只是简单地传数据。因为位置数据都在裁剪空间中，所以没有多余的事情要做。*如果您想显示3D图形，则由**您决定提供从3D转换为裁剪空间的着色器，因为 WebGL只是一个光栅化API***
+
+你可能想知道为什么三角形从中间开始，向右上方移动。因为裁剪空间的x轴从-1到+1. 则意味着0在中间，正数则是右边。
+
+至于为什么在上面，因为-1时最下面，+1在顶部，也就是说0在中间，正数在中间上面。
 
 
 
-
-
-
-
-完整代码在 `WebGLCodeResource/01第一次使用WebGL绘制三角形.html` 中
+对于2D的情况，下面开始为顶点着色器以像素坐标形式提供位置数据，着色器负责转换成裁剪空间坐标。
 
 
 

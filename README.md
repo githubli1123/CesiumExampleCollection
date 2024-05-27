@@ -1,6 +1,6 @@
 对于该项目文件夹的介绍可以查看 [ps.txt](https://github.com/githubli1123/CesiumExampleCollection/blob/main/ps.txt) 。
 
-才疏学浅，写的一般。
+才疏学浅，写的一般。随着自己的不断阅读和学习，文章内容也会不断变更，且看个乐呵吧现在。
 
 🎯正在拜读《3D Engine Design for Virtual Globes》、《实时计算机图形学第2版》，重温《WebGL高级编程》这本书，佛系梳理第二章内容（尽量在5月份完成）......
 

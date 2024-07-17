@@ -306,19 +306,73 @@ Cesium 的渲染循环，是在实例化 `Viewer` 时实例化了 `CesiumWidget`
 
 <img src="https://github.com/githubli1123/CesiumExampleCollection/blob/main/Img/02Cesium%E7%9A%84%E5%9C%B0%E7%90%83%E6%B8%B2%E6%9F%93%E8%BF%87%E7%A8%8B/%E6%B8%B2%E6%9F%93%E5%9C%B0%E7%90%83%E7%9A%84%E4%B8%89%E4%B8%AA%E9%87%8D%E8%A6%81%E9%98%B6%E6%AE%B5-%E8%AF%A5%E5%9B%BE%E7%89%87%E5%8F%AF%E5%9C%A8%E8%AF%A5%E9%A1%B9%E7%9B%AE%E4%B8%AD%E6%89%BE%E5%88%B0.png?raw=true" alt="渲染地球的三个重要阶段-该图片可在该项目中找到"  />
 
-现在看看函数render，
+现在看看函数 `fn render()`，这个函数中目前着重看待上方三个蓝色标识的函数。但是我们还需要带上一个函数： `Globe.prototype.update() `。我们需要站在渲染责任角度看待这些过程，这些过程是为了渲染地球影像瓦片四叉树。先清楚这四个过程的名字：update ~~ beginFrame ~~ render（updateAndExecuteCommands） ~~ endFrame。
 
-站在渲染责任角度看待这个过程？
+> updateAndExecuteCommands 是 Scene 中的一个重要的原型上私有静态函数。根据不同的视图模式来选择不同的具体的执行函数，起到这样一个作用。
+>
+> Globe 类可看做一个物体，Scene 类可看做一个容器。Globe 中的方法提供给 Scene 调用，Scene 是 Globe的渲染过程的控制者。
+>
+> 创建 cesiumWidget 时会即刻创建如下对象：canvas（一定创建）、scene（需要webgl支持才可创建）、globe、skyBox、skyAtmosphere、baseLayer。当然，这些 globe、skyBox、skyAtmosphere、baseLayer 对象是否被创建需要看传递给 cesiumWidget 的参数 options 中是否存在，她们创建后会被挂载到 scene 实例上，被 Scene 统一管理。可是查看代码可以发现：globe 对象是特殊的。她是可以缺失的，但她的创建也是需要依赖 ellipsoid（这很容易理解），那么按理来说 ellipsoid 应该只出现在 globe 对象内部，可是创建 globe 对象又需要 ellipsoid ，导致 ellipsoid 似乎“不合时宜” 地出现在 cesiumWidget 。
 
-beginFrame是准备阶段，
+> 碎碎念：一个 Scene 类被实例化后，会在内部创建 globe 属性并赋值为 undefined，但是我在这个类中无法知道这个属性何时会发生改变，何处的代码会让 globe 改变，这样是不是会让编程人员产生额外的心智负担？ 我目前认为这种现象是必然的，一个类的属性改变就是需要 “外部” 代码（cesiumWidget类）。但是我们可以限制这个 “外部” 代码的范围（只允许cesiumWidget类改变 globe 属性），让这个属性的改变不要随心所欲以免造成预期之外的情况。
+>
+> 不太正确的感悟：Cesium 在设计各种类时，是有着层级的划分的，最顶层的是 Viewer，越往下就是职责划分的越细，往往是相邻两层的类有着密切联系。
 
-站在UML时序图看待这个过程？
+
+
+```js
+  this._surface = new QuadtreePrimitive({
+    tileProvider: new GlobeSurfaceTileProvider({
+      terrainProvider: terrainProvider,
+      imageryLayers: imageryLayerCollection,
+      surfaceShaderSet: this._surfaceShaderSet,
+    }),
+  });
+
+地表
+  |---影像
+  |---地形
+  |---地表着色器
+```
+
+
+
+
+
+
+
+**① update**
+
+概述：update 过程主要做的事情是更新容器内所有 `ImageryLayer` 的可见状态，触发 layerShownOrHidden 事件。
 
 ```
-[Scene]
-	- prototype.render()
-[/Scene]
+ Globe.prototype.update()
+ 
+	[Module QuadtreePrimitive.js]
+	QuadtreePrimitive.prototype.update()
+	
+         [Module GlobeSurfaceTileProvider.js]
+         GlobeSurfaceTileProvider.prototype.update()
+         
+               [Module ImageryLayerCollection.js]
+               ImageryLayerCollection.prototype._update()
 ```
+
+Globe：拥有 影像瓦片四叉树、地形瓦片四叉树 等。控制影像和地形的渲染和销毁。与地球相关的射线检测（找地球与射线的交点位置）。
+
+QuadtreePrimitive：拥有所有瓦片。提供四叉树的数据结构和对应渲染流程的具体的处理方法。
+
+GlobeSurfaceTileProvider：提供四叉树瓦片和对应渲染流程的具体的处理方法。
+
+ImageryLayerCollection：四叉树瓦片存放的容器，提供该容器对瓦片的增删改查等方法。
+
+
+
+
+
+**② beginFrame**
+
+准备阶段
 
 
 
@@ -327,13 +381,25 @@ Globe.prototype.beginFrame 这个方法主要做了以下事情：
 1. 检查是否需要加载更新海洋法线贴图资源。
 2. 设置地球表面瓦片提供者的各种参数，例如最大屏幕空间误差、缓存大小、加载限制等。
 3. 设置瓦片提供者的各种参数，包括光照距离、夜晚淡入淡出距离、海洋高光强度、水面遮罩等。
-4. 开始渲染地球表面，包括瓦片的加载、渲染等操作。
+4. 通道判断，若为渲染通道，才设置 `GlobeSurfaceTileProvider` 的一系列状态并把渲染职责递给 QuadtreePrimitive （即Globe实例中的surface对象）。
 
 
 
-【思考 单一职责】当执行到surface.beginFrame这个函数时，渲染任务是 地球表面的影像皮肤，地球的地形骨架不在这里出现。单一职责嘛。
-影像皮肤在这一帧中是如何下载、如何解析、如何投影、如何渲染、如何回退的？胡言乱语：初学者不要试图理解函数执行顺序，只有经验足够的人
-才可以在纷繁复杂的函数执行中提炼出流程是如何设计的，我们目前是需要借助他人的理解，再加上自己对源码的阅读来提炼流程设计的奥秘。
+QuadtreePrimitive.prototype.beginFrame 方法：✨重点
+
+1. 无效化全部瓦片（跟重置状态一个意思），`invalidateAllTiles()` 。
+   - 条件：当 `GlobeSurfaceTileProvider` 改变了它的 `TerrainProvider` 时，会要求下一次起帧时 `QuadtreePrimitive` 重设全部的瓦片
+   - 作用：先调用 `clearTileLoadQueue` 函数（`QuadtreePrimitive.js` 模块内函数），清除瓦片加载队列；随后，若存在零级根瓦片（数组成员 `_levelZeroTiles`），那么就调用它们的 `freeResources` 方法（`QuadtreeTile` 类型），释放掉所有瓦片上的数据以及子瓦片递归释放
+2. 重新初始化 `GlobeSurfaceTileProvider`，`GlobeSurfaceTileProvider` 原型链上的 `initialize` 方法。
+   - 作用①是判断影像图层是否顺序有变化，有则对瓦片四叉树的每个 `QuadtreeTile` 的 data 成员上的数据瓦片重排列
+   - 作用②是释放掉 `GlobeSurfaceTileProvider` 上上一帧遗留下来待销毁的 `VertexArray`
+3. 清除瓦片四叉树内的加载队列，`clearTileLoadQueue()`。
+   - 清空了 `QuadtreePrimitive` 对象上三个私有数组成员，即在第 5 部分要介绍的三个优先级瓦片加载队列，并把一部分调试状态重置。
+
+
+
+【思考 单一职责】当执行到surface.beginFrame这个函数时，渲染任务是 地球表面的影像皮肤，地球的地形骨架。单一职责嘛。
+影像皮肤在这一帧中是如何下载、如何解析、如何投影、如何渲染、如何回退的？
 
 surface.beginFrame(frameState);  *Initializes values for a new render frame and prepare the tile load queue.*
 
@@ -367,11 +433,7 @@ surface.beginFrame(frameState);  *Initializes values for a new render frame and 
 
 既然散落在各处，但我相信 Cesium 会把这些东西给合理安排的。接下来看 下载、解析、投影、渲染、回退 流程在beginFrame中有怎么体现，需要借助《3D Engine Design for Virtual Globes》这本书来梳理和归纳。
 
-===胡思乱想
 
-？？？解析、投影（呈上） => 下载 => 解析、投影（启下）=> 渲染、回退
-
-===
 
 ①beginFrame阶段一般是做准备工作的，那接下来看看做了哪些准备工作（肯定是从下载、解析、投影、渲染、回退五点出发喽）
 
@@ -438,7 +500,6 @@ material: {
 3  tileProvider.endUpdate
 
 ```
-
 一阶段  这段代码是 GlobeSurfaceTileProvider 对象的 beginUpdate 方法，它在开始更新地球表面瓦片的过程中执行以下操作：
 
 1 清空 tilesToRenderByTextureCount 中的瓦片列表：
@@ -490,19 +551,26 @@ material: {
 
 
 
-```js
-  this._surface = new QuadtreePrimitive({
-    tileProvider: new GlobeSurfaceTileProvider({
-      terrainProvider: terrainProvider,
-      imageryLayers: imageryLayerCollection,
-      surfaceShaderSet: this._surfaceShaderSet,
-    }),
-  });
-```
-
 
 
 
 
 ## 03  Cesium的
 
+
+
+CesiumWidget
+
+Scene
+
+Globe
+
+Ellipsoid
+
+QuadtreePrimitive
+
+
+
+Globe 的作用：
+
+- 

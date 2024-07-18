@@ -294,10 +294,6 @@ Cesium 的渲染循环，是在实例化 `Viewer` 时实例化了 `CesiumWidget`
 
 ## 02 Cesium中的地球渲染
 
-需要一段时间梳理
-
-### 1>  
-
 <img src="https://github.com/githubli1123/CesiumExampleCollection/blob/main/Img/02Cesium%E7%9A%84%E5%9C%B0%E7%90%83%E6%B8%B2%E6%9F%93%E8%BF%87%E7%A8%8B/%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F%E4%BA%8B%E4%BB%B6%E4%B8%AD%E7%9A%84render%E8%8A%82%E7%82%B9.png?raw=true" alt="图片资源在该项目中可以找到：生命周期事件中的render节点"  />
 
 得找到哪些类是用于绘制地球的。
@@ -341,7 +337,7 @@ Cesium 的渲染循环，是在实例化 `Viewer` 时实例化了 `CesiumWidget`
 
 
 
-**① update**
+**① update阶段**
 
 概述：update 过程主要做的事情是更新容器内所有 `ImageryLayer` 的可见状态，触发 layerShownOrHidden 事件。
 
@@ -358,38 +354,42 @@ Cesium 的渲染循环，是在实例化 `Viewer` 时实例化了 `CesiumWidget`
                ImageryLayerCollection.prototype._update()
 ```
 
+下面介绍一下出现的类的主要作用：
+
 Globe：拥有 影像瓦片四叉树、地形瓦片四叉树 等。控制影像和地形的渲染和销毁。与地球相关的射线检测（找地球与射线的交点位置）。
 
 QuadtreePrimitive：拥有所有瓦片。提供四叉树的数据结构和对应渲染流程的具体的处理方法。
 
-GlobeSurfaceTileProvider：提供四叉树瓦片和对应渲染流程的具体的处理方法。
+GlobeSurfaceTileProvider：拥有 椭球体，瓦片分割模式tilingScheme 。提供四叉树瓦片和对应渲染流程的具体的处理方法。
 
 ImageryLayerCollection：四叉树瓦片存放的容器，提供该容器对瓦片的增删改查等方法。
 
+QuadtreeTile：QuadtreePrimitive 的一个瓦片，保存着这个瓦片的空间信息并管理该层级下的资源数据（图片，地形数据等），提供空间信息的查询方法和对资源的清除方法。其中有一个重要的属性成员 data ，
+
+TileImagery：*The assocation between a terrain tile and an imagery tile.*
 
 
 
+**② beginFrame阶段**
 
-**② beginFrame**
-
-准备阶段
-
+概述：重置各种状态，释放所有瓦片资源，清除瓦片四叉树内的加载队列。
 
 
-Globe.prototype.beginFrame 这个方法主要做了以下事情：
+
+（1）Globe.prototype.beginFrame 这个方法主要做了以下事情：
 
 1. 检查是否需要加载更新海洋法线贴图资源。
 2. 设置地球表面瓦片提供者的各种参数，例如最大屏幕空间误差、缓存大小、加载限制等。
 3. 设置瓦片提供者的各种参数，包括光照距离、夜晚淡入淡出距离、海洋高光强度、水面遮罩等。
-4. 通道判断，若为渲染通道，才设置 `GlobeSurfaceTileProvider` 的一系列状态并把渲染职责递给 QuadtreePrimitive （即Globe实例中的surface对象）。
+4. 通道判断，若为渲染通道，才设置 `GlobeSurfaceTileProvider` 的一系列状态并把渲染职责递给 QuadtreePrimitive （即 Globe 实例中的 surface 对象调用 `beginFrame` 方法）。
 
 
 
-QuadtreePrimitive.prototype.beginFrame 方法：✨重点
+（2）QuadtreePrimitive.prototype.beginFrame 方法：✨重点
 
-1. 无效化全部瓦片（跟重置状态一个意思），`invalidateAllTiles()` 。
-   - 条件：当 `GlobeSurfaceTileProvider` 改变了它的 `TerrainProvider` 时，会要求下一次起帧时 `QuadtreePrimitive` 重设全部的瓦片
-   - 作用：先调用 `clearTileLoadQueue` 函数（`QuadtreePrimitive.js` 模块内函数），清除瓦片加载队列；随后，若存在零级根瓦片（数组成员 `_levelZeroTiles`），那么就调用它们的 `freeResources` 方法（`QuadtreeTile` 类型），释放掉所有瓦片上的数据以及子瓦片递归释放
+1. 无效化全部瓦片（即重置状态），`invalidateAllTiles()` 。
+   - 条件：当 `GlobeSurfaceTileProvider` 改变了它的 `TerrainProvider` 时，会要求下一次起帧时 `QuadtreePrimitive` 重设全部的瓦片。
+   - 作用：`QuadtreePrimitive` 类来做到清除瓦片加载队列；随后，若 `QuadtreePrimitive` 类中存在零级根瓦片 数组成员，那么就调用零级根瓦片数组中每个元素（`QuadtreeTile` 类型）的 `freeResources` 方法，释放掉该层级上所有瓦片（`TileImagery` 类型）拥有的数据资源以及递归释放子层级上的所有瓦片资源。
 2. 重新初始化 `GlobeSurfaceTileProvider`，`GlobeSurfaceTileProvider` 原型链上的 `initialize` 方法。
    - 作用①是判断影像图层是否顺序有变化，有则对瓦片四叉树的每个 `QuadtreeTile` 的 data 成员上的数据瓦片重排列
    - 作用②是释放掉 `GlobeSurfaceTileProvider` 上上一帧遗留下来待销毁的 `VertexArray`
@@ -398,64 +398,130 @@ QuadtreePrimitive.prototype.beginFrame 方法：✨重点
 
 
 
-【思考 单一职责】当执行到surface.beginFrame这个函数时，渲染任务是 地球表面的影像皮肤，地球的地形骨架。单一职责嘛。
-影像皮肤在这一帧中是如何下载、如何解析、如何投影、如何渲染、如何回退的？
-
-surface.beginFrame(frameState);  *Initializes values for a new render frame and prepare the tile load queue.*
-
-> 接下来才是起帧的重点：
+> 碎碎念：解析、投影、下载、渲染、回退。但是这个流程的任务被细化并拆分到update、 beginFrame、updateAndExecuteCommands、endFrame 这三个阶段中。
 >
-> - 无效化全部瓦片（跟重置状态一个意思）
-> - 重新初始化 `GlobeSurfaceTileProvider`
-> - 清除瓦片四叉树内的加载队列
->
-> 这 3 个分步骤，由 `QuadtreePrimitive.js` 模块内的两个函数 `invalidateAllTiles()`、`clearTileLoadQueue()` 以及 `GlobeSurfaceTileProvider` 原型链上的 `initialize` 方法按上述流程中的顺序依次执行。
->
-> 下面是文字版解析。
->
-> - 函数 `invalidateAllTiles` 调用条件及作用
->
-> - - 条件：当 `GlobeSurfaceTileProvider` 改变了它的 `TerrainProvider` 时，会要求下一次起帧时 `QuadtreePrimitive` 重设全部的瓦片
->   - 作用：先调用 `clearTileLoadQueue` 函数（`QuadtreePrimitive.js` 模块内函数），清除瓦片加载队列；随后，若存在零级根瓦片（数组成员 `_levelZeroTiles`），那么就调用它们的 `freeResources` 方法（`QuadtreeTile` 类型），释放掉所有瓦片上的数据以及子瓦片递归释放
->
-> - 方法 `GlobeSurfaceTileProvider.prototype.initialize` 的作用：
->
-> - - 作用①是判断影像图层是否顺序有变化，有则对瓦片四叉树的每个 `QuadtreeTile` 的 data 成员上的数据瓦片重排列
->   - 作用②是释放掉 `GlobeSurfaceTileProvider` 上上一帧遗留下来待销毁的 `VertexArray`
->
-> - 函数 `clearTileLoadQueue` 作用更简单，清空了 `QuadtreePrimitive` 对象上三个私有数组成员，即在第 5 部分要介绍的三个优先级瓦片加载队列，并把一部分调试状态重置。
+> 既然散落在各处，但我相信 Cesium 会把这些东西给合理安排的。接下来看 下载、解析、投影、渲染、回退 流程在beginFrame中有怎么体现，需要借助《3D Engine Design for Virtual Globes》这本书来梳理和归纳。
 
 
 
+**③ render阶段**
 
-
-解析、投影、下载、渲染、回退。但是这个流程的任务被细化并拆分到 beginFrame、updateAndExecuteCommands、endFrame 这三个阶段中。
-
-既然散落在各处，但我相信 Cesium 会把这些东西给合理安排的。接下来看 下载、解析、投影、渲染、回退 流程在beginFrame中有怎么体现，需要借助《3D Engine Design for Virtual Globes》这本书来梳理和归纳。
+概述：根据帧状态选择要加载的新贴图，并创建渲染命令。
 
 
 
-①beginFrame阶段一般是做准备工作的，那接下来看看做了哪些准备工作（肯定是从下载、解析、投影、渲染、回退五点出发喽）
+先后执行的函数：
 
-beginFrame阶段的【？解析和投影】准备：
+1️⃣updateAndExecuteCommands()方法：
 
-- QuadtreePrimitive.prototype.invalidateAllTiles：当 `GlobeSurfaceTileProvider` 改变了它的 `TerrainProvider` 时，会要求下一次起帧时 `QuadtreePrimitive` 重设全部的瓦片。清除瓦片加载队列；递归法释放掉所有瓦片上的数据【？并重新创建】
-
-- GlobeSurfaceTileProvider.prototype.initialize ：**更新纹理重投影**，**图层顺序发生改变引发瓦片按图层索引进行重排序**，顶点数组的清理工作。
-
-- QuadtreePrimitive.prototype.clearTileLoadQueue：清除瓦片加载队列。why？
+`updateAndExecuteCommands()` 函数是 Scene 中的一个条件判断和选择分支的函数，最终会依据条件选择先后执行`updateAndRenderPrimitives()` 和 `executeCommands()` 这两个及其重要的函数。
 
 ```
-  primitive._tileLoadQueueHigh.length = 0;
-  primitive._tileLoadQueueMedium.length = 0;
-  primitive._tileLoadQueueLow.length = 0;
+function updateAndRenderPrimitives(scene) {
+  const frameState = scene._frameState;
+  // 贴地 primitive
+  scene._groundPrimitives.update(frameState);
+  // 一般 primitive
+  scene._primitives.update(frameState);
+  // ？
+  updateDebugFrustumPlanes(scene);
+  // 阴影帖图
+  updateShadowMaps(scene);
+  // 地球 🎉
+  if (scene._globe) {
+    scene._globe.render(frameState);
+  }
+}
 ```
 
-- 
+2️⃣updateAndRenderPrimitives() 方法：更新 Primitives ，渲染地球，把渲染职责递给了 Globe 。
 
-②updateAndExecuteCommands阶段
+3️⃣Globe.prototype.render 方法：条件 地球可见时，若有 _material 则根据渲染帧上下文来更新 _material ，然后渲染职责递给 QuadtreePrimitive 。（ _material 初始化是 undefined， 会涉及 makeShadersDirty 函数
+getter 和 setter：获取或设置地球的材质外观。这可以是多个内置 Material 对象之一，也可以是使用 Fabric 编写脚本的自定义材质。）
 
-![](https://pic1.zhimg.com/80/v2-eda9cf823923345e1ce1fc57a979b4fc_720w.webp)
+4️⃣QuadtreePrimitive.prototype.render 方法：根据 *frame state* 选择新的 *tiles* 。为选择的 tiles 创建渲染指令 *creates render commands*。
+
+1. GlobeSurfaceTileProvider.prototype.beginUpdate(frameState); 清空 tilesToRenderByTextureCount 中的瓦片列表。更新裁剪平面。重置一些状态。
+2. fn selectTilesForRendering(this, frameState); 🌟 根据 *frame state* 选择新的 *tiles* 
+3. fn createRenderCommandsForSelectedTiles(this, frameState); 🌟 为选择的 tiles 创建渲染指令 
+4. GlobeSurfaceTileProvider.prototype.endUpdate(frameState); 将创建好的 **绘图指令** 添加到帧状态对象（`FrameState`）中。
+
+QuadtreePrimitive.prototype.render 方法 分为三个阶段：
+
+一阶段 tileProvider.beginUpdate
+
+二阶段  selectTilesForRendering() 和 createRenderCommandsForSelectedTiles()
+
+三阶段 tileProvider.endUpdate
+
+```
+一阶段
+这段代码是 GlobeSurfaceTileProvider 对象的 beginUpdate 方法，它在开始更新地球表面瓦片的过程中执行以下操作：
+
+1. 清空 tilesToRenderByTextureCount 中的瓦片列表：
+遍历 tilesToRenderByTextureCount 数组，对每个纹理贴图数量对应的瓦片列表进行清空操作。
+这样做是为了准备接收新一轮更新后的瓦片数据。
+
+2. 更新裁剪平面：
+如果存在裁剪平面，并且已启用，则调用 clippingPlanes.update(frameState) 方法更新裁剪平面。
+裁剪平面用于在渲染过程中对瓦片进行裁剪，以提高渲染性能或实现特定效果。
+
+3. 重置已使用的绘制命令数目：
+将 _usedDrawCommands 属性重置为 0。
+这个属性用于记录当前帧已经使用的绘制命令数量，重置为 0 表示开始了新一轮的绘制过程。
+
+4. 重置已加载的瓦片和填充瓦片的标志位：
+将 _hasLoadedTilesThisFrame 和 _hasFillTilesThisFrame 标志位都设置为 false。
+这两个标志位用于记录当前帧是否已经加载了瓦片或填充了瓦片，重置为 false 表示开始了新的渲染过程，需要重新记录。
+```
+
+```
+二阶段
+
+两个重要函数🌟
+
+selectTilesForRendering：瓦片可见性、是否被选择贯穿始终
+1. 清空待渲染瓦片的数组容器 _tilesToRender：
+瓦片四叉树类（QuadtreePrimitive）会立即清空其自身成员 _tileToRender 待渲染瓦片数组（元素的类型是QuadtreeTile）中的所有元素。这说明 Scene 渲染一帧时会完全清空上一帧要渲染的四叉树瓦片。 ❓为什么不在 beginFrame 过程中执行这个操作？？？需要看看这个待渲染瓦片数组的内容。
+
+2. 判断零级瓦片的存在和创建零级瓦片 _levelZeroTiles：
+在零级贴图存在之前，我们无法渲染任何内容。不存在则要创建出来。若瓦片四叉树类中的成员 tileProvider（GlobeSurfaceTileProvider） 不存在，是无法创建零级瓦片的。
+创建零级瓦片依赖 QuadtreeTile 的静态方法 createLevelZeroTiles() ，传入瓦片四叉树上的瓦片分割模式参数 tilingScheme 来创建零级瓦片。createLevelZeroTiles() 核心是 根据传入的 tilingScheme 参数来得到 WebMercator 是正方形区域还是经纬度长方形区域，接着用一个简单的两层循环不断创建单个 QuadtreeTile 并添加到返回结果中，最终给到零级瓦片 _levelZeroTiles。
+
+⭕我需要明白四叉树的实现方式，那么我就需要去了解四叉树类的成员和方法。这个渲染流程的分析暂时搁置，先去分析一下四叉树的实现。
+```
+
+瓦片四叉树：
+
+组成成分 ：
+
+- 零级瓦片 _levelZeroTiles
+- 瓦片分割模式 
+
+```
+三阶段
+这段代码是 `GlobeSurfaceTileProvider` 对象的 `endUpdate` 方法，它在地球表面瓦片更新周期结束后执行以下操作：
+
+1. **初始化渲染状态**：
+   - 如果当前没有定义渲染状态 (`this._renderState`)，则根据配置创建渲染状态。
+   - 创建的渲染状态包括：启用剔除、启用深度测试、设置深度测试函数等。
+
+2. **根据当前帧的加载和填充瓦片情况，更新填充瓦片的高度**：
+   - 如果当前帧同时存在加载的瓦片和填充的瓦片，则需要将加载的瓦片的高度信息传递给填充的瓦片。
+   - 调用 `TerrainFillMesh.updateFillTiles` 方法更新填充瓦片的高度信息。
+
+3. **处理垂直夸张变化**：
+   - 检测垂直夸张是否发生了变化，如果发生了变化，则需要更新加载的瓦片的地形夸张效果。
+   - 遍历加载的瓦片，调用 `updateExaggeration` 方法更新瓦片的地形夸张效果。
+
+4. **生成绘制命令**：🌟
+   - 根据瓦片的纹理数量和加载状态，为每个瓦片生成绘制命令，并添加到渲染命令列表中。
+   - 遍历 `tilesToRenderByTextureCount` 数组，对每个纹理贴图数量对应的瓦片列表进行处理，为每个瓦片生成绘制命令，并更新当前帧的最小地形高度。
+```
+
+
+
+
 
 关于地球影像皮肤渲染的 “职责” 函数 在 Globe.render ，然后就把任务分为 this._material.update(); 和 this._surface.render(); 
 
@@ -463,7 +529,7 @@ beginFrame阶段的【？解析和投影】准备：
 
 ✅仔细看看`updateAndRenderPrimitives` 就破案了，这里的 primitives 是指的 globe，渲染的是 globe。难道 `executeCommands`  就一点都不管 gobe 的渲染了吗？目前我们假设是的。
 
-那么这里就要给大家看一张图，这张图表达了 数据，场景和渲染器 之间的关系，同时归纳总结了 primitives 这个 “数据集”
+那么这里就要给大家看一张图，这张图表达了 数据，场景和渲染器 之间的关系，同时归纳总结了 primitives 这个 “数据集”：
 
 <img src="https://images.prismic.io/cesium/2015-05-26-0.png?auto=compress%2Cformat&rect=0%2C0%2C1191%2C717&w=945"  />
 
@@ -491,71 +557,13 @@ material: {
 
 由此可见，重要的不可或缺的是 _surface 属性。
 
-分为三个阶段：
 
-1  tileProvider.beginUpdate
 
-2  selectTilesForRendering(); createRenderCommandsForSelectedTiles();
 
-3  tileProvider.endUpdate
-
-```
-一阶段  这段代码是 GlobeSurfaceTileProvider 对象的 beginUpdate 方法，它在开始更新地球表面瓦片的过程中执行以下操作：
-
-1 清空 tilesToRenderByTextureCount 中的瓦片列表：
-遍历 tilesToRenderByTextureCount 数组，对每个纹理贴图数量对应的瓦片列表进行清空操作。
-这样做是为了准备接收新一轮更新后的瓦片数据。
-
-2 更新裁剪平面：
-如果存在裁剪平面，并且已启用，则调用 clippingPlanes.update(frameState) 方法更新裁剪平面。
-裁剪平面用于在渲染过程中对瓦片进行裁剪，以提高渲染性能或实现特定效果。
-
-3 重置已使用的绘制命令数目：
-将 _usedDrawCommands 属性重置为 0。
-这个属性用于记录当前帧已经使用的绘制命令数量，重置为 0 表示开始了新一轮的绘制过程。
-
-4 重置已加载的瓦片和填充瓦片的标志位：
-将 _hasLoadedTilesThisFrame 和 _hasFillTilesThisFrame 标志位都设置为 false。
-这两个标志位用于记录当前帧是否已经加载了瓦片或填充了瓦片，重置为 false 表示开始了新的渲染过程，需要重新记录。
-```
-
-```
-二阶段   createRenderCommandsForSelectedTiles();重要函数🌟showTileThisFrame(tile, frameState)：
-这个重要函数的作用：在这一帧中 指定 需要显示的tile。provider（GlobeSurfaceTileProvider）可以通过 将渲染命令添加到命令列表的操作 来显示tile，或者使用任何其他适当的方法。只有该方法在下一帧也被调用，该tile在下一帧才会可见。
-
-```
-
-```
-三阶段  这段代码是 `GlobeSurfaceTileProvider` 对象的 `endUpdate` 方法，它在地球表面瓦片更新周期结束后执行以下操作：
-
-1. **初始化渲染状态**：
-   - 如果当前没有定义渲染状态 (`this._renderState`)，则根据配置创建渲染状态。
-   - 创建的渲染状态包括：启用剔除、启用深度测试、设置深度测试函数等。
-
-2. **根据当前帧的加载和填充瓦片情况，更新填充瓦片的高度**：
-   - 如果当前帧同时存在加载的瓦片和填充的瓦片，则需要将加载的瓦片的高度信息传递给填充的瓦片。
-   - 调用 `TerrainFillMesh.updateFillTiles` 方法更新填充瓦片的高度信息。
-
-3. **处理垂直夸张变化**：
-   - 检测垂直夸张是否发生了变化，如果发生了变化，则需要更新加载的瓦片的地形夸张效果。
-   - 遍历加载的瓦片，调用 `updateExaggeration` 方法更新瓦片的地形夸张效果。
-
-4. **生成绘制命令**：🌟
-   - 根据瓦片的纹理数量和加载状态，为每个瓦片生成绘制命令，并添加到渲染命令列表中。
-   - 遍历 `tilesToRenderByTextureCount` 数组，对每个纹理贴图数量对应的瓦片列表进行处理，为每个瓦片生成绘制命令，并更新当前帧的最小地形高度。
-```
 
 
 
 <img src="https://github.com/githubli1123/CesiumExampleCollection/blob/main/Img/02Cesium%E7%9A%84%E5%9C%B0%E7%90%83%E6%B8%B2%E6%9F%93%E8%BF%87%E7%A8%8B/%E4%B8%80%E6%AD%A5%E4%B8%80%E6%AD%A5%E6%89%BE%E5%88%B0%E5%9C%B0%E7%90%83%E6%B8%B2%E6%9F%93%E7%9B%B8%E5%85%B3%E5%87%BD%E6%95%B0-%E8%AF%A5%E5%9B%BE%E5%8F%AF%E5%9C%A8%E8%AF%A5%E9%A1%B9%E7%9B%AE%E4%B8%AD%E6%89%BE%E5%88%B0.png?raw=true" style="zoom:67%;" />
-
-
-
-
-
-
-
-## 03  Cesium的
 
 
 
@@ -573,4 +581,10 @@ QuadtreePrimitive
 
 Globe 的作用：
 
-- 
+
+
+
+
+## 03  Cesium中的Primitive
+
+

@@ -1,8 +1,8 @@
 对于该项目文件夹的介绍可以查看 [ps.txt](https://github.com/githubli1123/CesiumExampleCollection/blob/main/ps.txt) 。
 
-才疏学浅，写的一般。随着自己的不断阅读和学习，文章内容也会不断变更，且看个乐呵吧现在。
+才疏学浅，写的一般。随着自己的不断阅读和学习，文章内容也会不断变更。请批判的看待内容。
 
-🎯正在拜读《3D Engine Design for Virtual Globes》、《实时计算机图形学第2版》，重温《WebGL高级编程》这本书，佛系梳理第二章内容（尽量在5月份完成）......
+🎯正在拜读《3D Engine Design for Virtual Globes》、《实时计算机图形学第2版》，重温《WebGL高级编程》这本书，佛系梳理第三、四章内容（7月底前完成）......
 
 # Cesium 源码解读
 
@@ -28,12 +28,12 @@
 没有这些风格：
 
 - 注重关联。知识点或者类关系尽量不做过多关联，可能没法让你触类旁通或者知识点之间的链接较弱。
-- 表述严谨。本身我目前也处于阅读源码的前期阶段吧，表述比较随意，望谅解。
+- 表述严谨。本身我目前也处于阅读源码进行学习的阶段，表述比较随意，望谅解。
 - ......
 
 
 
-### 1> 如何做到对源码进行简单调试
+### 1 如何做到对源码进行简单调试
 
 ✅这里就不再赘述源码工程目录了（如果需要后面再补充）。直接给大家说明一下我是如何做到对 Cesium 源码进行简单的调试：
 
@@ -74,7 +74,7 @@
 
 
 
-### 2> 文章目录
+### 2 文章目录
 
 00 文章目录与源码简单调试   [👉🔗](https://github.com/githubli1123/CesiumExampleCollection/blob/main/Temp/%E9%9C%80%E8%A6%81%E5%8F%91%E5%B8%83%E7%9A%84%E5%8D%9A%E5%AE%A2/00%E6%96%87%E7%AB%A0%E7%9B%AE%E5%BD%95%E4%B8%8E%E6%BA%90%E7%A0%81%E7%9A%84%E7%AE%80%E5%8D%95%E8%B0%83%E8%AF%95/00%E6%96%87%E7%AB%A0%E7%9B%AE%E5%BD%95%E4%B8%8E%E6%BA%90%E7%A0%81%E7%AE%80%E5%8D%95%E8%B0%83%E8%AF%95.md)
 
@@ -86,7 +86,7 @@
 
 ## 01 Cesium的渲染调度
 
-### 1> CesiumWidget 类是渲染调度器
+### 1 CesiumWidget 类是渲染调度器
 
 所谓的渲染是指在浏览器 canvas 上绘制图像，调度是指控制着这个渲染的使用。借助 `requestAnimationFrame, rAF` 这个浏览器 API 来不断在每一帧调用 单帧渲染函数 `render()` ，单帧渲染函数借助 WebGL 来实现 canvas 绘制。而这个多帧循环往复运行和渲染的过程有一个调度者，是 `CesiumWidget` 类。
 
@@ -120,7 +120,7 @@ function startRenderLoop(widget: CesiumWidget) {
 
 
 
-### 2>  Scene 类是场景对象容器
+### 2  Scene 类是场景对象容器
 
 需要进入到伪代码①中的 `widget.render(); // 单帧渲染` 
 
@@ -229,7 +229,7 @@ viewer.scene.preRender.addEventListener(()=>{
 
 
 
-### 3>  Event 类实现事件机制
+### 3  Event 类实现事件机制
 
 在编程领域，当谈论事件这个概念时，一般背靠着 事件驱动编程（Event-Driven Programming）思想 。事件驱动编程是一种常见的编程范式，它基于事件和事件处理器的概念，通过监听和响应事件来控制程序的执行流程。
 
@@ -262,7 +262,7 @@ Cesium 实现事件机制的模式是发布订阅模式（Publisher-Subscriber�
 
 
 
-### 4>  小结
+### 4  小结
 
 Cesium 的渲染循环，是在实例化 `Viewer` 时实例化了 `CesiumWidget` ，由属性 `_useDefaultRenderLoop` setter 触发 `startRenderLoop()` 方法，从而开启了渲染循环。在绘制一帧的逻辑中：
 
@@ -276,7 +276,7 @@ Cesium 的渲染循环，是在实例化 `Viewer` 时实例化了 `CesiumWidget`
 
 目前没有必要再继续深究 地球是如何绘制的 实体是如何绘制的，这涉及 Globe 、Primitive 等数据实体的更新和渲染，也涉及到 WebGL 在 Cesium 中如何调度 —— 这些都不是渲染循环这个概念中的内容。
 
-### 5>  参考资料
+### 5  参考资料
 
 [Cesium原理篇：1最长的一帧之渲染调度 - fu*k ](https://www.cnblogs.com/fuckgiser/p/5744509.html)
 
@@ -337,7 +337,7 @@ Cesium 的渲染循环，是在实例化 `Viewer` 时实例化了 `CesiumWidget`
 
 
 
-**① update阶段**
+**① update过程**
 
 概述：update 过程主要做的事情是更新容器内所有 `ImageryLayer` 的可见状态，触发 layerShownOrHidden 事件。
 
@@ -370,7 +370,7 @@ TileImagery：*The assocation between a terrain tile and an imagery tile.*
 
 
 
-**② beginFrame阶段**
+**② beginFrame过程**
 
 概述：重置各种状态，释放所有瓦片资源，清除瓦片四叉树内的加载队列。
 
@@ -404,7 +404,7 @@ TileImagery：*The assocation between a terrain tile and an imagery tile.*
 
 
 
-**③ render阶段**
+**③ render过程**
 
 概述：根据帧状态选择要加载的新贴图，并创建渲染命令。
 
@@ -412,7 +412,7 @@ TileImagery：*The assocation between a terrain tile and an imagery tile.*
 
 先后执行的函数：
 
-1️⃣updateAndExecuteCommands()方法：
+1️⃣ updateAndExecuteCommands()方法：
 
 `updateAndExecuteCommands()` 函数是 Scene 中的一个条件判断和选择分支的函数，最终会依据条件选择先后执行`updateAndRenderPrimitives()` 和 `executeCommands()` 这两个及其重要的函数。
 
@@ -434,12 +434,12 @@ function updateAndRenderPrimitives(scene) {
 }
 ```
 
-2️⃣updateAndRenderPrimitives() 方法：更新 Primitives ，渲染地球，把渲染职责递给了 Globe 。
+2️⃣ updateAndRenderPrimitives() 方法：更新 Primitives ，渲染地球，把渲染职责递给了 Globe 。
 
-3️⃣Globe.prototype.render 方法：条件 地球可见时，若有 _material 则根据渲染帧上下文来更新 _material ，然后渲染职责递给 QuadtreePrimitive 。（ _material 初始化是 undefined， 会涉及 makeShadersDirty 函数
+3️⃣ Globe.prototype.render 方法：条件 地球可见时，若有 _material 则根据渲染帧上下文来更新 _material ，然后渲染职责递给 QuadtreePrimitive 。（ _material 初始化是 undefined， 会涉及 makeShadersDirty 函数
 getter 和 setter：获取或设置地球的材质外观。这可以是多个内置 Material 对象之一，也可以是使用 Fabric 编写脚本的自定义材质。）
 
-4️⃣QuadtreePrimitive.prototype.render 方法：根据 *frame state* 选择新的 *tiles* 。为选择的 tiles 创建渲染指令 *creates render commands*。
+4️⃣ QuadtreePrimitive.prototype.render 方法：根据 *frame state* 选择新的 *tiles* 。为选择的 tiles 创建渲染指令 *creates render commands*。
 
 1. GlobeSurfaceTileProvider.prototype.beginUpdate(frameState); 清空 tilesToRenderByTextureCount 中的瓦片列表。更新裁剪平面。重置一些状态。
 2. fn selectTilesForRendering(this, frameState); 🌟 根据 *frame state* 选择新的 *tiles* 
@@ -482,21 +482,76 @@ QuadtreePrimitive.prototype.render 方法 分为三个阶段：
 
 selectTilesForRendering：瓦片可见性、是否被选择贯穿始终
 1. 清空待渲染瓦片的数组容器 _tilesToRender：
-瓦片四叉树类（QuadtreePrimitive）会立即清空其自身成员 _tileToRender 待渲染瓦片数组（元素的类型是QuadtreeTile）中的所有元素。这说明 Scene 渲染一帧时会完全清空上一帧要渲染的四叉树瓦片。 ❓为什么不在 beginFrame 过程中执行这个操作？？？需要看看这个待渲染瓦片数组的内容。
+瓦片四叉树类（QuadtreePrimitive）会立即清空其自身成员 _tileToRender 待渲染瓦片数组（元素的类型是QuadtreeTile）中的所有元素。这说明 Scene 渲染一帧时会完全清空上一帧要渲染的四叉树瓦片。 
+❓为什么不在 beginFrame 过程中执行这个操作？？？需要看看这个待渲染瓦片数组的内容。
 
 2. 判断零级瓦片的存在和创建零级瓦片 _levelZeroTiles：
 在零级贴图存在之前，我们无法渲染任何内容。不存在则要创建出来。若瓦片四叉树类中的成员 tileProvider（GlobeSurfaceTileProvider） 不存在，是无法创建零级瓦片的。
-创建零级瓦片依赖 QuadtreeTile 的静态方法 createLevelZeroTiles() ，传入瓦片四叉树上的瓦片分割模式参数 tilingScheme 来创建零级瓦片。createLevelZeroTiles() 核心是 根据传入的 tilingScheme 参数来得到 WebMercator 是正方形区域还是经纬度长方形区域，接着用一个简单的两层循环不断创建单个 QuadtreeTile 并添加到返回结果中，最终给到零级瓦片 _levelZeroTiles。
+创建零级瓦片依赖 QuadtreeTile 的静态方法 createLevelZeroTiles() ，传入瓦片四叉树上的瓦片分割模式参数 tilingScheme 来创建零级瓦片。
+createLevelZeroTiles() 核心是 根据传入的 tilingScheme 参数来得到 WebMercator 是正方形区域还是经纬度长方形区域，接着用一个简单的两层循环不断创建单个 QuadtreeTile 并添加到返回结果中，最终给到零级瓦片 _levelZeroTiles。
 
-⭕我需要明白四叉树的实现方式，那么我就需要去了解四叉树类的成员和方法。这个渲染流程的分析暂时搁置，先去分析一下四叉树的实现。
+⭕我需要明白四叉树的实现方式，那么我就需要去了解四叉树类的成员和方法。这个渲染流程的分析暂时搁置，先去分析一下四叉树的实现。详情见...
+
+3. 递归遍历零级瓦片🔄
+当执行这一步时，表明零级瓦片数组必定存在零级瓦片。然后做一些简单的相机运算，状态、数据运算，紧接着以深度优先，从近到远的顺序遍历零级瓦片数组。
+具体的代码逻辑是：遍历零级瓦片数组，对每个瓦片元素判断是否可以渲染，不能则代表此四叉树瓦片还没下载完数据，将它放入 高优先加载队列 📋🔜 ，在 endFrame 终帧过程中执行下载操作，可渲染则执行 fn visitIfVisible() 函数。
+
+优先级：是否渲染 tile.renderable，瓦片被细化且瓦片的子瓦片是否upsampled，
+
+fn visitIfVisible()
+3.1 计算是否可见，剔除瓦片：
+	可见：立即进入递归访问瓦片的函数 visitTile() 。
+		3.1.1 检查瓦片是否可以细化（refine）：
+		如果瓦片可以细分，代码会检查其四个子瓦片（西南、东南、西北、东北）
+		是否都是通过上采样（upsampled）得到的。
+		如果所有子瓦片都是通过上采样得到的，那么就没有必要渲染这些子瓦片，直接渲染当前瓦片，
+		将这个无需等待子元素的已经被渲染的 tile 放入 中优先加载队列 📋🔜 。
+		同时，确保这些子瓦片不会被卸载，不忘记她们是被 upsampled 来的。
+		
+		3.1.2 细分瓦片：
+		如果子瓦片不是全部通过上采样得到的，不需要将这些子瓦片添加到队列中。
+		visitVisibleChildrenNearToFar() 会根据照相机位置（cameraPosition）的方位，
+		从近到远地访问瓦片的子瓦片。具体来说，它根据相机位置所在的象限（东南、西北、西南、东北）
+		来访问子瓦片，并调用 visitIfVisible 函数来检查每个子瓦片是否可见，以及是否需要进一步细分。
+		总的来说就是细化当前瓦片，递归调用 visitIfVisible() 来实现瓦片全部细分。
+		在访问子瓦片的过程中，会检查哪些子瓦片是可见的，哪些需要加载，哪些已经渲染过等。
+		如果某个子瓦片是可见的，并且之前没有渲染过，那么它会添加到渲染列表中。
+		如果某个子瓦片是可见的，但是之前已经渲染过，那么它会更新其高度信息。
+		
+		# 检查子图块渲染情况，是否有子图块被添加到了渲染列表中。
+		firstRenderedDescendantIndex 表示第一个被渲染的子图块在 _tilesToRender 数组中的索引。
+		如果索引值不等于 _tilesToRender 的长度，说明至少有一个子图块被添加到了渲染列表中。
+		如果有子图块被添加到了渲染列表中，接下来会处理这些子图块的渲染状态和加载情况。
+		先获取子图块的渲染详情： traversalDetails 对象中获取，用于了解访问子图块期间发生的情况。
+		然后需要处理未准备好的子tile。
+		
+		# 处理子图块的渲染状态和加载
+		## 如果发现一些子tile还没有准备好渲染，并且上一帧也全都没被渲染过，
+		那么将所有这些子tile从渲染列表中剔除
+		（❓将该层级所有待渲染的tile及其祖先标记为被剔除 TileSelectionResult.KICKED 状态）。
+		## 接着更新渲染列表：将渲染列表中从 firstRenderedDescendantIndex 开始的所有子图块移除，
+		添加当前 tile 到渲染列表中。同时，更新 _tileToUpdateHeights 数组。
+		## 处理加载逻辑：如果在上一帧没有渲染过当前 tile，并且有很多子图块还没有准备好渲染，
+		那么将当前 tile 添加到 中优先加载队列 📋🔜 。
+		
+		## 更新遍历详情traversalDetails:
+		更新 traversalDetails 中的 allAreRenderable 和 anyWereRenderedLastFrame 字段。
+		## 更新高度信息:
+		如果当前 tile 是新渲染的，将其添加到 _tileToUpdateHeights 数组中，用于后续更新高度信息。
+		## 调试计数器增加，增加调试计数器，用于跟踪等待子图块加载的情况。
+		# 预加载祖先图块:如果需要预加载祖先图块，并且当前 tile 没有被添加到加载队列中，
+		将当前 tile 添加到 低优先级加载队列 📋🔜 。
+		
+		剩下的活儿就是把合适的瓦片添加至瓦片四叉树上的 _tilesToRender 数组，
+		并再次发起 高优先的瓦片加载队列 📋🔜 的加载行为。收尾，更新遍历详情traversalDetails。
+
+
+	不可见：又涉及三个分支，这里暂时不分析。
+
+
+
+💫这个阶段的事情是比较复杂的，需要绘制一个流程图来辅助理解。
 ```
-
-瓦片四叉树：
-
-组成成分 ：
-
-- 零级瓦片 _levelZeroTiles
-- 瓦片分割模式 
 
 ```
 三阶段
@@ -585,6 +640,8 @@ Globe 的作用：
 
 
 
-## 03  Cesium中的Primitive
+## 03  从 Cesium 中的 Primitive 出发，到理解 Cesium 渲染架构
 
 
+
+## 04 从 Cesium 中的 Entity 出发看 

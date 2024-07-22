@@ -551,28 +551,48 @@ fn visitIfVisible()
 
 
 💫这个阶段的事情是比较复杂的，需要绘制一个流程图来辅助理解。
+
+
+
+createRenderCommandsForSelectedTiles：
+
+这个 showTileThisFrame 方法会统计传进来的 QuadtreeTile 的 data 成员（ TileImagery 类型） 
+上的 imagery 成员（Imagery[] 类型）有多少个是准备好的，条件有二：
+Imagery 数据对象是准备好的；
+Imagery 对象对应的 ImageryLayer 不是全透明的。
+
+
 ```
 
 ```
 三阶段
-这段代码是 `GlobeSurfaceTileProvider` 对象的 `endUpdate` 方法，它在地球表面瓦片更新周期结束后执行以下操作：
+这段代码是 GlobeSurfaceTileProvider 对象的 endUpdate 方法
 
-1. **初始化渲染状态**：
-   - 如果当前没有定义渲染状态 (`this._renderState`)，则根据配置创建渲染状态。
+1. 初始化渲染状态：
+   - 如果当前没有定义渲染状态 (this._renderState)，则根据配置创建渲染状态。
    - 创建的渲染状态包括：启用剔除、启用深度测试、设置深度测试函数等。
 
-2. **根据当前帧的加载和填充瓦片情况，更新填充瓦片的高度**：
+2. 根据当前帧的加载和填充瓦片情况，更新填充瓦片的高度：
    - 如果当前帧同时存在加载的瓦片和填充的瓦片，则需要将加载的瓦片的高度信息传递给填充的瓦片。
-   - 调用 `TerrainFillMesh.updateFillTiles` 方法更新填充瓦片的高度信息。
+   - 调用 TerrainFillMesh.updateFillTiles 方法更新填充瓦片的高度信息。
 
-3. **处理垂直夸张变化**：
+3. 处理垂直夸张变化：
    - 检测垂直夸张是否发生了变化，如果发生了变化，则需要更新加载的瓦片的地形夸张效果。
-   - 遍历加载的瓦片，调用 `updateExaggeration` 方法更新瓦片的地形夸张效果。
+   - 遍历加载的瓦片，调用 updateExaggeration 方法更新瓦片的地形夸张效果。
 
-4. **生成绘制命令**：🌟
+4. 生成绘制命令：🌟
    - 根据瓦片的纹理数量和加载状态，为每个瓦片生成绘制命令，并添加到渲染命令列表中。
-   - 遍历 `tilesToRenderByTextureCount` 数组，对每个纹理贴图数量对应的瓦片列表进行处理，为每个瓦片生成绘制命令，并更新当前帧的最小地形高度。
+   - 遍历 tilesToRenderByTextureCount 数组，对每个纹理贴图数量对应的瓦片列表进行处理，
+   	 为每个瓦片生成绘制命令，并更新当前帧的最小地形高度。
 ```
+
+
+
+**④ endFrame 过程**
+
+
+
+
 
 
 
@@ -589,28 +609,6 @@ fn visitIfVisible()
 <img src="https://images.prismic.io/cesium/2015-05-26-0.png?auto=compress%2Cformat&rect=0%2C0%2C1191%2C717&w=945"  />
 
 援引自文章：https://cesium.com/blog/2015/05/26/graphics-tech-in-cesium-stack/
-
-那么好，现在找到了渲染地球的函数方法 `Globe.prototype.render` ，渲染职责给到了 Globe ，_material 和 _surface 这两个代表了什么？
-
-```
-1. _material 初始化是 undefined， 会涉及 makeShadersDirty 函数
-getter 和 setter：获取或设置地球的材质外观。这可以是多个内置 Material 对象之一，也可以是使用 Fabric 编写脚本的自定义材质。
-material: {
-  get: function () {
-    return this._material;
-  },
-  set: function (material) {
-    if (this._material !== material) {
-      this._material = material;
-      makeShadersDirty(this);
-    }
-  },
-},
-
-2. _surface 初始化是 QuadtreePrimitive 实例
-```
-
-由此可见，重要的不可或缺的是 _surface 属性。
 
 
 
@@ -644,4 +642,13 @@ Globe 的作用：
 
 
 
+
+
+
+
 ## 04 从 Cesium 中的 Entity 出发看 
+
+
+
+
+

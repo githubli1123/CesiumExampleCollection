@@ -640,9 +640,100 @@ Globe 的作用：
 
 ## 03  从 Cesium 中的 Primitive 出发，到理解 Cesium 渲染架构
 
+指令：
+
+CesiumJS 将 WebGL 的绘制过程（也就是行为）封装成了“指令”，不同的指令对象有不同的用途。指令对象保存的行为，具体就是指 由 Primitive 对象（不一定全是 Primitive）生成的 WebGL 所需的数据资源（缓冲、纹理、唯一值等），以及着色器对象。数据资源和着色器对象仍然是 CesiumJS 封装的对象，而不是 WebGL 原生的对象，这是为了更好地与 CesiumJS 各种对象结合去绘图。由此可见， Cesium 封装的程度非常高。
+
+> 此段文字来源自：[CesiumJS 2022^ 源码解读2 渲染架构之 Primitive - 创建并执行指令 - 知乎 (zhihu.com)](https://zhuanlan.zhihu.com/p/496497442)
+
+怎么知道 CesiumJS 有哪些指令？具体内容又是什么？
 
 
 
+通道：
+
+Cesium 中，一帧的画面是由多个通道按照固定的顺序依次绘制后构成的，通道英文单词是 `Pass`。
+
+其顺序保存在 `Renderer/Pass.js` 模块导出的冻结对象中，目前（1.116版本）有 10 个优先顺序等级（最后 `NUMBER_OF_PASSES` 是通道的数量）：
+
+```js
+const Pass = {
+  // If you add/modify/remove Pass constants, also change the automatic GLSL constants
+  // that start with 'czm_pass'
+  //
+  // Commands are executed in order by pass up to the translucent pass.
+  // Translucent geometry needs special handling (sorting/OIT). The compute pass
+  // is executed first and the overlay pass is executed last. Both are not sorted
+  // by frustum.
+  ENVIRONMENT: 0,
+  COMPUTE: 1,
+  GLOBE: 2,
+  TERRAIN_CLASSIFICATION: 3,
+  CESIUM_3D_TILE: 4,
+  CESIUM_3D_TILE_CLASSIFICATION: 5,
+  CESIUM_3D_TILE_CLASSIFICATION_IGNORE_SHOW: 6,
+  OPAQUE: 7,
+  TRANSLUCENT: 8,
+  VOXELS: 9,
+  OVERLAY: 10,
+  NUMBER_OF_PASSES: 11,
+};
+```
+
+❓The compute pass is executed first and the overlay pass is executed last. Both are not sorted by frustum. 对于这注释我不理解。
+
+
+
+### 1 生成指令 - Primitives 生成指令
+
+看 `updateAndRenderPrimitives()`函数。
+
+`Scene.js` 模块内的函数 `updateAndRenderPrimitives()` 负责更新 Scene 上的 Primitives。
+
+期间，渲染职责会通过 `PrimitiveCollection` 转移到 `Primitive` 类（或者有类似结构的类，譬如 `Cesium3DTileset` 等）上，即调用 Primitive.prototype.update 方法。该方法会令其更新本身的数据资源，根据情况创建新的着色器，并随之创建或更新 **绘图指令**，最终在 `Primitive.js` 模块内的 `updateAndQueueCommands()` 函数排序、并推入帧状态对象的指令列表 frameState.commandList 上。
+
+> 是怎么知道 `Primitive` 类会有类似结构的类的捏？ 这就需要看官方文档中放出的对于 Pirmitives 的分类。
+
+<img src="https://images.prismic.io/cesium/2015-05-26-0.png?auto=compress%2Cformat&rect=0%2C0%2C1191%2C717&w=945"  />
+
+这里贴出 Primitive.prototype.update 方法的具体功能
+
+1. **检查是否需要更新**：
+   - 如果`Primitive`对象没有几何实例（`geometryInstances`）或外观（`appearance`），或者不在3D场景中，或者不在渲染或拾取的帧中，那么就不需要更新。
+2. **处理错误**：
+   - 如果`Primitive`对象的状态是`FAILED`，那么抛出错误。
+3. **创建批处理表**：
+   - 如果`Primitive`对象没有批处理表（`_batchTable`），那么创建一个批处理表。
+4. **更新批处理表**：
+   - 如果批处理表有属性，并且支持顶点纹理提取，那么更新批处理表。
+5. **加载几何实例**：
+   - 如果`Primitive`对象的状态不是`COMPLETE`或`COMBINED`，那么根据`asynchronous`属性决定是异步加载还是同步加载几何实例。
+6. **更新批处理表边界球体和偏移量**：
+   - 如果`Primitive`对象的状态是`COMBINED`，那么更新批处理表的边界球体和偏移量。
+7. **创建顶点数组**：
+   - 如果`Primitive`对象的状态是`COMBINED`，那么创建顶点数组。
+8. **检查是否需要重新计算边界球体**：
+   - 如果`Primitive`对象需要重新计算边界球体，那么重新计算。
+9. **创建或重新创建渲染状态和着色器程序**：
+   - 如果外观或材质发生了变化，那么创建或重新创建渲染状态和着色器程序。
+10. **更新命令**：
+    - 根据外观、材质、透明度等属性，更新命令。
+11. **更新并排队命令**：
+    - 更新并排队的命令，推入帧状态对象的指令列表 frameState.commandList 上，以便在渲染过程中使用。
+
+
+
+### 2 待执行指令集的优化
+
+ 看 `executeCommands()` 函数。
+
+多段视椎体技术，筛选可见集。
+
+
+
+如果不加优化，最简单的策略就是直接把指令集合中所有指令执行一遍，随后在屏幕上展现出来。这显然是不妥的。 最好的优化就是不渲染。
+
+Cesium 使用的多段视椎体技术来将视锥体由远及近切成多个区域，相机近段的指令足够多以保证效果，相机远段的指令尽量少来提高性能。
 
 
 

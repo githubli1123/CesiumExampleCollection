@@ -749,7 +749,122 @@ Cesium 使用的多段视椎体技术来将视锥体由远及近切成多个区�
 
 ## 05 Cesium 的时钟系统
 
+时钟系统：
+
+widget：TimeLine
+
+engine：clock
 
 
 
+## 06 跑通 Hello World 示例
 
+代码非常之简短，就可以搭建一个地球及其时间轴、图层控制等各类部件：
+
+```
+const viewer = new Cesium.Viewer("cesiumContainer");
+```
+
+从这句代码中可以看出给 Viewer 提供了一个字符串，但实际上这个字符串是 HTML 中一个存在的 div 的 id 名称。即为 Viewer 提供一个容器就可以创建 Cesium 基础示例。
+
+
+
+接下来，一点一点 dubugger ，看看整体流程。
+
+### 1 
+
+在 new Viewer 时，主要是创建一个基于 Cesium 的应用程序的基础小部件。这个小部件将所有标准的 Cesium 小部件组合在一起，形成一个可重用的包。通过使用混合（mixins），可以扩展这个小部件以添加对各种应用程序有用的功能。
+
+主要功能包括：
+
+- **初始化容器和选项**：检查并获取容器元素，处理初始化选项。
+- **创建基础小部件**：根据选项创建各种小部件，如动画、时间轴、全屏按钮、场景模式选择器等。
+- **处理数据源**：初始化数据源集合，并处理数据源的添加和删除事件。
+- **事件处理**：处理各种事件，如时钟更新、场景模式变化、数据源变化等。
+- **UI交互**：处理用户界面交互，如点击、双击、拖放等。
+
+在  new Viewer 时会 new CesiumWidget ，可以看作这个是 Cesium 的渲染场景的窗口部件，也是渲染调度器，CesiumWidget 当中包含 地球、天空盒等实体和一些设置（例如useDefaultRenderLoop）。
+
+Q1：如何初始化这些容器，又是如何赋予容器样式的捏？
+
+A1：我们来看 TimeLine 是如何创建的。其他均可举一反三。
+
+下面说明了 TimeLine 的 HTML 容器部分如何由 JavaScript 完成，并且注册了 settime 事件。
+
+```
+// Timeline
+// 声明 实例化对象 变量
+let timeline;
+// 判断是否需要创建容器和实例化
+if (!defined(options.timeline) || options.timeline !== false) {
+  // 创建，挂载容器和赋予类名
+  const timelineContainer = document.createElement("div");
+  timelineContainer.className = "cesium-viewer-timelineContainer";
+  viewerContainer.appendChild(timelineContainer);
+  // 实例化 Timeline，细分并创建挂载 timeLine 部件中的小部件（组成成分）。
+  timeline = new Timeline(timelineContainer, clock);
+  timeline.addEventListener("settime", onTimelineScrubfunction, false);// 看下面
+  timeline.zoomTo(clock.startTime, clock.stopTime);
+}
+
+// settime 事件触发后 onTimelineScrubfunction 执行
+function onTimelineScrubfunction(e) {
+  const clock = e.clock;
+  clock.currentTime = e.timeJulian;
+  clock.shouldAnimate = false;
+}
+```
+
+```js
+// 在 new TimeLine 末时，会注册这个事件名称。
+const evt = document.createEvent("Event");
+evt.initEvent("settime", true, true);
+evt.clientX = xPos;
+evt.timeSeconds = seconds;
+evt.timeJulian = this._scrubJulian;
+evt.clock = this._clock;
+this._topDiv.dispatchEvent(evt);
+```
+
+```js
+Timeline.prototype.addEventListener = function (type, listener, useCapture) {
+  // 为该指定 div 添加某个类型的事件。
+  this._topDiv.addEventListener(type, listener, useCapture);
+};
+```
+
+下面说明 TimeLine 的 CSS 样式部分如何由 JavaScript 完成，屁也不是哦，就是直接引入。
+
+```
+import "../Widgets/widgets.css";
+```
+
+我还以为可以在 Cesium 中内部又有一些代码可以自动引入文件😕。或者为这些 div 动态赋予 CSS 样式。但仔细想想，这样可能是最佳实践，因为我们开发者可能会需要修改默认的 CSS 样式，如果使用 JavaScript 来为 div 赋予样式，就需要为开发者提供修改 CSS 的接口（还不一定好用），那这样倒不如直接引入修改后的 CSS 样式。况且 CSS 本来就作为前端基石之一，有着她的重要性和作用，不是非要使用 JavaScript 来统一管理。
+
+到此，Cesium 已经创建了很多部件的容器了。接下来分析最重要的场景容器。
+
+### 2 
+
+此时，看看 new CesiumWidget 做了哪些事情。
+
+用于创建一个包含 Cesium 场景的小部件。这个小部件可以用于显示 3D 地球、地形、天空盒、太阳、月亮等。
+
+主要功能包括：
+
+1. **初始化容器和选项**：检查并获取容器元素，处理初始化选项。
+2. **创建场景**：根据选项创建 Cesium 场景，包括设置天空盒、地形、影像图层等。
+3. **处理错误**：如果创建场景时发生错误，会显示错误面板。
+4. **处理渲染循环**：**如果 `useDefaultRenderLoop` 为 `true`，则启动默认的渲染循环。**
+5. **处理分辨率和像素比例**：根据浏览器支持的分辨率和设备像素比例，调整画布的大小和像素比例。
+6. **处理相机**：根据选项设置相机的初始状态，包括场景模式、地图投影等。
+7. **处理事件**：处理画布的右键菜单和选择开始事件，以防止默认行为。
+
+此外，代码还处理了一些错误情况，例如容器元素不存在、选项不合法等。通过这些功能，`CesiumWidget` 小部件能够提供一个功能丰富、易于使用的 Cesium 场景显示框架。
+
+可以看到创建 CesiumWidget 和创建 Viewer 做的一些事情十分相像。我们可以理解为 Viewer 在搭建整体，而 CesiumWidget 对其这个渲染场景的窗口部件中所呈现的实体和事件处理做了更加细致的工作。并开启了渲染循环。
+
+
+
+### 3 
+
+此时，在 new CesiumWidget 时开启了渲染循环。画面一帧一帧的绘制和展示，动画效果随时间一帧帧地更新（此处还需要单开一个章节）。

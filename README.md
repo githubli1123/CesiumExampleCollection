@@ -38,11 +38,16 @@
 ✅这里就不再赘述源码工程目录了（如果需要后面再补充）。直接给大家说明一下我是如何做到对 Cesium 源码进行简单的调试：
 
 1. 克隆源码。在 GitHub 上克隆一份 Cesium 源码，我目前（2024年4月）使用的版本是 1.116 。
-2. 执行 `npm i` 命令。可以这样粗浅理解为：我们克隆的这份源码其实并不是纯粹的只包含源码代码文件，其实它也算是一个项目，是一个工程，你可以执行 `npm i` 命令后 （这个命令会干些什么捏，目前不管）打开 index.html ，可以在浏览器看到 Cesium 示例、测试与文档。
-3. 执行 `node server.js` 命令。使用 live server 类似插件启动服务打开 index.html 是不妥的。需要执行命令行 `node server.js` 启动服务，这个是一个基于 Express 的开发服务器，用于在本地开发和测试 CesiumJS，提供了文件监听、自动构建、静态文件服务和代理等功能，方便开发者进行 CesiumJS 相关项目的开发和调试。
-4. 调试源码。这时就可以使用各类调试方法来调试 Cesium 源码了，在 `packages` 文件夹下修改源码文件或者在浏览器开发者工具断点调试。
+2. 执行 `npm i` 命令。安装所需要的包。可以这样粗浅理解为：我们克隆的这份源码其实并不是纯粹的只包含源码代码文件，其实它也算是一个项目，是一个工程，你可以执行 `npm i` 命令后 （这个命令具体会干些什么捏，目前不管）打开 index.html ，可以在浏览器看到 Cesium 示例、测试与文档。
+3. 执行 `npm run build` 命令。构建 Build 目录。运行 `build`/`release`/`make-zip` 等指令，此文件夹会出现。它主要是发布出来 CesiumJS 的 IIFE 和 CommonJS 版本，以及附带必须要用的五大静态资源文件夹 - `Assets`、`Core`、`ThirdParty`、`Widgets`、`Workers`。根据指令的不同，发布的库文件不一样，也影响是不是有 TypeScript 类型定义文件、SourceMap 映射文件。`build` 指令发布的是 `Build/CesiumUnminified` 未压缩版本，含 IIFE 库和 CommonJS 库，也就是主库文件约有 25 万行的版本；`release` 指令发布的是 `Build/Cesium` 文件夹下的压缩版本，代码经过简化。
+4. 执行 `node server.js` 命令。使用 live server 类似插件启动服务打开 index.html 是不妥的。需要执行命令行 `node server.js` 启动服务，这个是一个基于 Express 的开发服务器，用于在本地开发和测试 CesiumJS，提供了文件监听、自动构建、静态文件服务和代理等功能，方便开发者进行 CesiumJS 相关项目的开发和调试。
+5. 调试源码。这时就可以使用各类调试方法来调试 Cesium 源码了，在 `packages` 文件夹下修改源码文件或者在浏览器开发者工具断点调试。
 
 暂时不分享调试源码的一些技巧，可以自行查找。
+
+
+
+下面说明一下如何看构建命令。
 
 
 
@@ -640,6 +645,8 @@ Globe 的作用：
 
 ## 03  从 Cesium 中的 Primitive 出发，到理解 Cesium 渲染架构
 
+（本章需要整理）
+
 指令：
 
 CesiumJS 将 WebGL 的绘制过程（也就是行为）封装成了“指令”，不同的指令对象有不同的用途。指令对象保存的行为，具体就是指 由 Primitive 对象（不一定全是 Primitive）生成的 WebGL 所需的数据资源（缓冲、纹理、唯一值等），以及着色器对象。数据资源和着色器对象仍然是 CesiumJS 封装的对象，而不是 WebGL 原生的对象，这是为了更好地与 CesiumJS 各种对象结合去绘图。由此可见， Cesium 封装的程度非常高。
@@ -747,17 +754,72 @@ Cesium 使用的多段视椎体技术来将视锥体由远及近切成多个区�
 
 
 
-## 05 Cesium 的时钟系统
+## 05 Cesium 的时间和时钟
 
-时钟系统：
+（本章需要整理）
 
-widget：TimeLine
+时间、时钟、时钟跳动、时间表示法、不同时间表示法的转换、实体与时钟的关系。
 
-engine：clock
+时钟系统包含：
+
+widget：TimeLine、Animation
+
+engine：Clock、JulianDate
+
+跟 Clock 相关的主要有 Animation控件 和 Timeline控件 ，通常两者会搭配在一起使用。
+
+Viewer 在初始化时，内部会创建一个 Clock ，所以建议开发者使用 viewer.cesiumWidget.clock 而不是自己创建Clock，毕竟在一个应用内，时间通常都是标准的，创建多个 Clock 反而混淆了。
+
+Q1：那可以创建多个 TimeLine与Animation的组合 吗？
 
 
 
-## 06 跑通 Hello World 示例
+Q2：时间在 Cesium 中到底有发挥了什么功能？
+
+- 首先，我们可以自定义帧率，为属性 targetFrameRate 设置值后可以让浏览器以设定的帧率渲染。由此体现时间的一个作用，帮助实现 设置目标帧率 功能。内部实现中需要当前帧时间与上一帧时间的差值大于帧时间间隔就渲染和改变尺寸，否则不渲染不改变尺寸。但浏览器依然勤勤恳恳地一个不落下地执行*requestAnimationFrame*(render) 。
+
+  帧时间：在 浏览器 中会为渲染帧设置的一种时间，便于得到前后两帧之间的差值。调试源码发现是浮点数（类似 478.3 这种），会不断变大。第一帧的帧时间不可能为0，可能因为浏览器是把 requestAnimationFrame 的回调函数执行完成后的那个时间点作为第一帧的帧时间，仔细想想应该确实如此嘿嘿😁。
+
+- 其次，每一帧的逝去都必然伴随着一次 clock tick 。Cesium 中的时间和现实中的时间都是永不停歇一直向前的，逝者如斯夫，不舍昼夜。直到浏览器标签页关闭，大道磨灭。
+- 时间的首次创建是在 Scene 的实例化过程中。在不少应用 CesiumJS 着色器的文章中就用 `FrameState` 上的 `frameNumber` 来变相获取当前时间。可以看出，在 60FPS 的屏幕上，通过 `frameNumber / 60` 就可粗略获得当前时间值（秒），但是一旦浏览器的帧速率变化，比如 144 FPS，可是着色器中只考虑了 60FPS 情况，这个计算获得的时间就很不准确。而真正的时间值在帧状态对象 `scene._frameState` 的 `time` 字段上，推荐使用该成员值作为当前时间值。对于`JulianDate.now` 方法，无论什么时候初始化 CesiumJS，获取的时间值永远都是该方法运行的那个时刻。
+
+```js
+function Scene (/**/) {
+  // ...
+  updateFrameNumber(this, 0.0, JulianDate.now());
+  // ...
+}
+
+function updateFrameNumber(scene, frameNumber, time) {
+  const frameState = scene._frameState;
+  frameState.frameNumber = frameNumber;
+  frameState.time = JulianDate.clone(time, frameState.time);
+}
+
+JulianDate.now = function (result) {
+  return JulianDate.fromDate(new Date(), result);
+}
+```
+
+- 时间表示法。CesiumJS 使用 `JulianDate` 类来表示整个程序中的时间，它是一种天文时间系统，叫作“儒略”日期，它有两个成员字段，一个是自儒略第一天（公元前 4713 年 1 月 1 日）到现在的天数 `dayNumber`，另一个是今天已经走过的秒数（零点起算）`secondsOfDay`。
+
+  > 注：我们所说的公历时间，即 GregorianDate（格里日历记法），在 CesiumJS 中也是有的，是作为 JS 原生类 Date 的高精度替代品。
+
+- 时钟跳动。**每当调用 `tick` 时，会获取当前的时刻 `clock.currentTime`，然后调用 `JulianDate.addSeconds()` 方法把时间往前推。** 随后返回这个 currentTime 时间值，她将作为该帧中渲染实体的 “ 基准时间 ” ，帧渲染的生命周期函数就会使用这个 currentTime 。
+
+
+
+
+
+## 06 Cesium 中的 Property机制
+
+
+
+
+
+
+
+## 0 跑通 Hello World 示例
 
 代码非常之简短，就可以搭建一个地球及其时间轴、图层控制等各类部件：
 
@@ -773,12 +835,12 @@ const viewer = new Cesium.Viewer("cesiumContainer");
 
 ### 1 
 
-在 new Viewer 时，主要是创建一个基于 Cesium 的应用程序的基础小部件。这个小部件将所有标准的 Cesium 小部件组合在一起，形成一个可重用的包。通过使用混合（mixins），可以扩展这个小部件以添加对各种应用程序有用的功能。
+在 new Viewer 时，主要是创建一个基于 Cesium 的应用程序的基础小控件。这个小部件将所有标准的 Cesium 小控件组合在一起，形成一个可重用的包。通过使用混合（mixins），可以扩展这个小部件以添加对各种应用程序有用的功能。
 
 主要功能包括：
 
 - **初始化容器和选项**：检查并获取容器元素，处理初始化选项。
-- **创建基础小部件**：根据选项创建各种小部件，如动画、时间轴、全屏按钮、场景模式选择器等。
+- **创建基础小控件**：根据选项创建各种小部件，如动画、时间轴、全屏按钮、场景模式选择器等。
 - **处理数据源**：初始化数据源集合，并处理数据源的添加和删除事件。
 - **事件处理**：处理各种事件，如时钟更新、场景模式变化、数据源变化等。
 - **UI交互**：处理用户界面交互，如点击、双击、拖放等。
@@ -867,4 +929,4 @@ import "../Widgets/widgets.css";
 
 ### 3 
 
-此时，在 new CesiumWidget 时开启了渲染循环。画面一帧一帧的绘制和展示，动画效果随时间一帧帧地更新（此处还需要单开一个章节）。
+此时，在 new CesiumWidget 时开启了渲染循环。画面随时间的跳动一帧一帧的绘制和展示，动画效果也是随时间一帧帧地更新（此处还需要单开一个章节）。不管如何，时间必然会跳动 tick ，场景内的地球这些实体会在每一次时间 tick 后 render （这也就是一帧），让动画也是在随后的每一帧中随时间跳动，tick 后 animation。

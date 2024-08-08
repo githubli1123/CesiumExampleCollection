@@ -387,7 +387,7 @@ Scene 实例中创建了四个 Event 实例，分别为 preUpdate、postUpdate�
 | 调用了 addEventListener                    | 添加事件处理器     | 订阅事件（订阅频道）               |
 | 调用了 raiseEvent                          | 触发事件           | 触发事件（看一眼频道后接受的消息） |
 
-<img src="https://github.com/githubli1123/CesiumExampleCollection/blob/main/Img/01Cesium%E7%9A%84%E6%B8%B2%E6%9F%93%E8%B0%83%E5%BA%A6/LifecycleEvent.png?raw=true" alt="Lifecycle" style="zoom: 80%;" />
+<img src="https://github.com/githubli1123/CesiumExampleCollection/blob/main/Img/01Cesium%E7%9A%84%E6%B8%B2%E6%9F%93%E8%B0%83%E5%BA%A6/Cesium%E4%BA%8B%E4%BB%B6.png?raw=true" alt="Lifecycle" style="zoom: 80%;" />
 
 在我看来哈，Cesium 的 Event 类和 Scene 类组合起来可以看作为发布订阅模式，像是 “ 散装 ” 的。而且好像有两个订阅者，一个是订阅事件的，一个专门来触发事件。而且事件总线也没有，散布在 scene 实例中。Event 类更像是一个辅助类一样，用于提供事件相关的各类方法。
 

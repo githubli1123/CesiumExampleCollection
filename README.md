@@ -246,19 +246,152 @@ viewer.scene.preRender.addEventListener(()=>{
 - 其他对象的状态改变（如 Entity 属性的改变、Entity 的增加等）
 - ......
 
-事件处理器：为该事件注册的回调函数，事件触发后由其处理。
+事件处理器：
+
+为该事件注册的回调函数，事件触发后由其处理。MDN对该概念的阐述：https://developer.mozilla.org/zh-CN/docs/Web/Events/Event_handlers 。也会有人愿意把她叫做侦听器。
 
 在此，先解释一下 Cesium 对于事件机制的实现方式和使用：
 
+下面放出 Event.js 事件类的全部代码，附带注释
+
+```
+import Check from "./Check.js";
+import defined from "./defined.js";
+
+function Event() {
+  this._listeners = []; // 事件处理器（侦听器）：为该事件注册的回调函数。
+  this._scopes = []; // 回调函数的作用域
+  this._toRemove = []; // 移除的事件处理器
+  this._insideRaiseEvent = false; // 当前是否正在触发事件
+}
+
+Object.defineProperties(Event.prototype, {
+  // 事件处理器的数量。当前订阅事件的侦听器数量。
+  numberOfListeners: {
+    get: function () {
+      return this._listeners.length - this._toRemove.length;
+    },
+  },
+});
+
+// 添加事件处理器
+Event.prototype.addEventListener = function (listener, scope) {
+  //>>includeStart('debug', pragmas.debug);
+  Check.typeOf.func("listener", listener);
+  //>>includeEnd('debug');
+
+  this._listeners.push(listener); // 添加事件处理器
+  this._scopes.push(scope); // 添加事件处理器作用域
+
+  const event = this;
+  return function () {
+    event.removeEventListener(listener, scope);
+  };
+};
+
+Event.prototype.removeEventListener = function (listener, scope) {
+  //>>includeStart('debug', pragmas.debug);
+  Check.typeOf.func("listener", listener);
+  //>>includeEnd('debug');
+
+  const listeners = this._listeners;
+  const scopes = this._scopes;
+
+  let index = -1;
+  for (let i = 0; i < listeners.length; i++) {
+    if (listeners[i] === listener && scopes[i] === scope) {
+      index = i;
+      break;
+    }
+  }
+
+  if (index !== -1) {
+    if (this._insideRaiseEvent) {
+      //In order to allow removing an event subscription from within
+      //a callback, we don't actually remove the items here.  Instead
+      //remember the index they are at and undefined their value.
+      this._toRemove.push(index);
+      listeners[index] = undefined;
+      scopes[index] = undefined;
+    } else {
+      listeners.splice(index, 1);
+      scopes.splice(index, 1);
+    }
+    return true;
+  }
+
+  return false;
+};
+
+function compareNumber(a, b) {
+  return b - a;
+}
+
+// 触发事件，执行所有事件处理器
+Event.prototype.raiseEvent = function () {
+  this._insideRaiseEvent = true; // 表示当前正在触发事件
+
+  let i;
+  const listeners = this._listeners;
+  const scopes = this._scopes;
+  let length = listeners.length;
+
+  // 执行所有事件处理器。若某些事件处理器被移除，则无法通过defined(listener)校验
+  for (i = 0; i < length; i++) {
+    const listener = listeners[i];
+    if (defined(listener)) {
+      listeners[i].apply(scopes[i], arguments);
+    }
+  }
+
+  // Actually remove items removed in removeEventListener.
+  // 正式地从 _listeners 中移除 _toRemove 中保存的事件处理器下标。
+  const toRemove = this._toRemove;
+  length = toRemove.length;
+  if (length > 0) {
+    toRemove.sort(compareNumber);
+    for (i = 0; i < length; i++) {
+      const index = toRemove[i];
+      listeners.splice(index, 1);
+      scopes.splice(index, 1);
+    }
+    toRemove.length = 0;
+  }
+
+  this._insideRaiseEvent = false;// 表示当前不在触发事件
+};
+
+export default Event;
+
+```
 
 
-站在事件机制的角度，对这个 Scene 原型上的 `render()` 方法进行分析：略......见下图（待完善）
+
+站在事件机制的角度，对这个 Scene 原型上的 `render()` 方法进行分析：
+
+下图主要表示单帧中的生命周期事件是如何实现和使用的
 
 <img src="https://github.com/githubli1123/CesiumExampleCollection/blob/main/Img/01Cesium%E7%9A%84%E6%B8%B2%E6%9F%93%E8%B0%83%E5%BA%A6/event.png?raw=true" alt="event"  />
 
+Scene 实例中创建了四个 Event 实例，分别为 preUpdate、postUpdate、preRender、postRender ，并把她们挂载为自己的实例成员。图中的 an event 表示在某块代码中的行为触发了这个事件从而执行了所有事件处理器，一般都是直接调用 raiseEvent 方法。调用这个方法也往往是由 Scene 实例自身在每一帧时自动调用一次（可以在 Scene.prototype.render 方法中看到），一般不由开发者手动调用。这些事件处理器的添加则是由 addEventListener 方法实现，这部分往往由开发者调用。由此，我们可以在自己的项目代码中为某个事件添加事件处理器或者在Cesium中某个类实例为某个事件添加事件处理器，Scene 实例会在每一帧时调用这些事件处理器。实际案例：[Cesium中3D模型的驱动方法 | Jack Huang's Blog (huangwang.github.io)](https://huangwang.github.io/2018/12/26/Cesium中3D模型的驱动方法/) 。
+
+现在来点绕的，发布订阅模式在这里如何体现的。我们来梳理一下各类名词。
+
+| Cesium                                     | 事件机制           | 发布订阅模式                       |
+| ------------------------------------------ | ------------------ | ---------------------------------- |
+| Scene 实例（调用了 raiseEvent 的类或函数） | 创建事件的人       | 发布者（消息发布者）               |
+| Scene 中挂载 preUpdate 等                  | 创建事件           | 发布事件（创建消息频道）           |
+| preUpdate 等                               | 事件               | 事件总线中的一个事件（频道）       |
+| Scene 实例                                 | 事件集合           | 事件总线（消息总线）               |
+| 调用了 addEventListener 的类或函数         | 添加事件处理器的人 | 订阅者（消息接受者、侦听器）       |
+| 调用了 addEventListener                    | 添加事件处理器     | 订阅事件（订阅频道）               |
+| 调用了 raiseEvent                          | 触发事件           | 触发事件（看一眼频道后接受的消息） |
+
 <img src="https://github.com/githubli1123/CesiumExampleCollection/blob/main/Img/01Cesium%E7%9A%84%E6%B8%B2%E6%9F%93%E8%B0%83%E5%BA%A6/LifecycleEvent.png?raw=true" alt="Lifecycle" style="zoom: 80%;" />
 
-左上角为事件注册者，提供事件回调。右边为事件处理者或者叫事件触发器，由一个事件来触发 事件处理者。由于该生命周期事件，我们可以在项目中使用类似的代码 `scene.addEventListener(cb)` 来为每一帧做一些自定义的任务。例如：每次渲染之前（即preRender事件）打印一下`时间差不多喽` 。
+在我看来哈，Cesium 的 Event 类和 Scene 类组合起来可以看作为发布订阅模式，像是 “ 散装 ” 的。而且好像有两个订阅者，一个是订阅事件的，一个专门来触发事件。而且事件总线也没有，散布在 scene 实例中。Event 类更像是一个辅助类一样，用于提供事件相关的各类方法。
+
+<img src="https://github.com/githubli1123/CesiumExampleCollection/blob/main/Img/01Cesium%E7%9A%84%E6%B8%B2%E6%9F%93%E8%B0%83%E5%BA%A6/LifecycleEvent.png?raw=true" alt="Lifecycle" style="zoom: 80%;" />
 
 这个 Event 类会在后面反复使用，复用也是 Cesium 解耦出这个 helper class 的原因。同时，解耦 Event 类可以让事件机制更加清晰独立。
 Cesium 实现事件机制的模式是发布订阅模式（Publisher-Subscriber），具有一个事件中心（EventEmitter）也就是实例化的 Event ：preUpdate、postUpdate 等。

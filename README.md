@@ -391,12 +391,22 @@ Scene 实例中创建了四个 Event 实例，分别为 preUpdate、postUpdate�
 
 在我看来哈，Cesium 的 Event 类和 Scene 类组合起来可以看作为发布订阅模式，像是 “ 散装 ” 的。而且好像有两个订阅者，一个是订阅事件的，一个专门来触发事件。而且事件总线也没有，散布在 scene 实例中。Event 类更像是一个辅助类一样，用于提供事件相关的各类方法。
 
+> 😵碎碎念＆瞎扯淡：
+>
+> 其实我感觉 Cesium 库中对于事件相关的处理，都是把事件放在某个类中，而不是放在单独的事件总线中，比如说 Scene 中。这可以表明这些事件的归属者就是 Scene，为编写库带来方便，减少心智负担。如果真的按照发布订阅模式来做，事件的归属就会无法看出来了。但是，归属问题似乎也是可以解决的，只需要创建多个事件总线就可以了。但这样就伴随着事件机制相关的逻辑变得复杂。
+>
+> **对于 Scene 中的事件，重要的意义在于切分出了四个重要的时刻。Cesium 每一帧都会有这四个时刻，到了时间点就会触发相对应的事件。我们开发者可以做的就只是为这四个时刻添加一些我们需要的逻辑即可。可以联想一下 Vue 中的生命周期钩子，我感觉很像**。
+
+
+
 <img src="https://github.com/githubli1123/CesiumExampleCollection/blob/main/Img/01Cesium%E7%9A%84%E6%B8%B2%E6%9F%93%E8%B0%83%E5%BA%A6/LifecycleEvent.png?raw=true" alt="Lifecycle" style="zoom: 80%;" />
 
 这个 Event 类会在后面反复使用，复用也是 Cesium 解耦出这个 helper class 的原因。同时，解耦 Event 类可以让事件机制更加清晰独立。
 Cesium 实现事件机制的模式是发布订阅模式（Publisher-Subscriber），具有一个事件中心（EventEmitter）也就是实例化的 Event ：preUpdate、postUpdate 等。
 
-事件机制也可以用观察者模式（Observer Pattern）来实现，这些模式决定了事件如何在组件之间进行传递和处理。
+当然，事件机制也可以用观察者模式（Observer Pattern）来实现。这些模式决定了事件如何在组件之间进行传递和处理。既然说到观察者模式就顺道也写一下。
+
+（...待填坑）
 
 
 

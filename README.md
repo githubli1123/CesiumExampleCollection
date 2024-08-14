@@ -954,6 +954,10 @@ JulianDate.now = function (result) {
 
 
 
+Iso8601："2024-01-25T00:07:34.7999999523162842Z"
+
+GregorianDate（格里高利历）
+
 ## 06 Cesium 中的 Property机制
 
 

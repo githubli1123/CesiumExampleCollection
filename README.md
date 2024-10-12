@@ -2,9 +2,9 @@
 
 才疏学浅，写的一般。随着自己的不断阅读和学习，文章内容也会不断变更。请批判的看待内容。
 
-🏷️ 9月份全力学习 node.js 和 ts 。
+🏷️ 10月梳理第三、四章内容。 
 
-🎯正在拜读《3D Engine Design for Virtual Globes》、《实时计算机图形学第2版》，重温《WebGL高级编程》这本书，佛系梳理第三、四章内容（10月中旬完成）......
+🎯 拜读《3D Engine Design for Virtual Globes》、《实时计算机图形学第2版》，重温《WebGL高级编程》这本书。
 
 # Cesium 源码解读
 

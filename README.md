@@ -2,7 +2,7 @@
 
 才疏学浅，写的一般。随着自己的不断阅读和学习，文章内容也会不断变更。请批判的看待内容。
 
-🏷️ 10月梳理第三、四章内容。 
+🏷️ 10月梳理第三、四章内容。 整理 Cesium 社区的英文文章。
 
 🎯 拜读《3D Engine Design for Virtual Globes》、《实时计算机图形学第2版》，重温《WebGL高级编程》这本书。
 
@@ -40,16 +40,18 @@
 ✅这里就不再赘述源码工程目录了（如果需要后面再补充）。直接给大家说明一下我是如何做到对 Cesium 源码进行简单的调试：
 
 1. 克隆源码。在 GitHub 上克隆一份 Cesium 源码，我目前（2024年4月）使用的版本是 1.116 。
-2. 执行 `npm i` 命令。安装所需要的包。可以这样粗浅理解为：我们克隆的这份源码其实并不是纯粹的只包含源码代码文件，其实它也算是一个项目，是一个工程，你可以执行 `npm i` 命令后 （这个命令具体会干些什么捏，目前不管）打开 index.html ，可以在浏览器看到 Cesium 示例、测试与文档。
+2. 执行 `npm i` 命令。安装所需要的包。可以这样粗浅理解为：我们克隆的这份源码其实并不是纯粹的只包含源码代码文件，其实它也算是一个项目，是一个工程。
 3. 执行 `npm run build` 命令。构建 Build 目录。运行 `build`/`release`/`make-zip` 等指令，此文件夹会出现。它主要是发布出来 CesiumJS 的 IIFE 和 CommonJS 版本，以及附带必须要用的五大静态资源文件夹 - `Assets`、`Core`、`ThirdParty`、`Widgets`、`Workers`。根据指令的不同，发布的库文件不一样，也影响是不是有 TypeScript 类型定义文件、SourceMap 映射文件。`build` 指令发布的是 `Build/CesiumUnminified` 未压缩版本，含 IIFE 库和 CommonJS 库，也就是主库文件约有 25 万行的版本；`release` 指令发布的是 `Build/Cesium` 文件夹下的压缩版本，代码经过简化。
-4. 执行 `node server.js` 命令。使用 live server 类似插件启动服务打开 index.html 是不妥的。需要执行命令行 `node server.js` 启动服务，这个是一个基于 Express 的开发服务器，用于在本地开发和测试 CesiumJS，提供了文件监听、自动构建、静态文件服务和代理等功能，方便开发者进行 CesiumJS 相关项目的开发和调试。
+4. 执行 `npm run start` 命令。使用 live server 类似插件启动服务打开 index.html 是不妥的。需要执行命令行 `node server.js` 启动服务，这个是一个基于 Express 的开发服务器，用于在本地开发和测试 CesiumJS，提供了文件监听、自动构建、静态文件服务和代理等功能，方便开发者进行 CesiumJS 相关项目的开发和调试。随后，就可以 Ctrl+左键 点击链接在浏览器看到 Cesium 示例、测试与文档。
 5. 调试源码。这时就可以使用各类调试方法来调试 Cesium 源码了，在 `packages` 文件夹下修改源码文件或者在浏览器开发者工具断点调试。
 
 暂时不分享调试源码的一些技巧，可以自行查找。
 
 
 
-下面说明一下如何看构建命令。
+我们可以在 package.json 文件中的 script 项中看到全部的脚本命令。打包命令都是使用 gulp ，如今2024年，几乎都在使用 webpack 或者 vite 来进行打包的时代，使用 gulp 打包算是比较小众的感觉了，你可以在 `gulpfile.js` 文件中看到。gulpfile.js文件会在运行 gulp 命令时被自动加载。gulp的有一个明显的缺点就是没有 tree shaking ，但是使用 esbuild 可以弥补这一部分。`esbuild` 在构建脚本中被用来执行多种构建任务，主要包括代码的打包、压缩、树摇（tree shaking）、加载外部资源等操作。
+
+- [ ] 挖坑：后面再详细谈谈 vite 和 webpack 的一些实践指南。
 
 
 
@@ -64,6 +66,8 @@
 **2**  `Source` 源码资源文件夹中的变更为了 `package` 文件夹。这一点可以在 [Cesium1.100版本更新日志](https://github.com/CesiumGS/cesium/releases/tag/1.100) 中看到，源代码已分区为两个文件夹： `packages/engine` 和 `packages/widgets`。
 
 <img src="https://github.com/githubli1123/CesiumExampleCollection/blob/main/Img/00%E6%96%87%E7%AB%A0%E7%9B%AE%E5%BD%95%E4%B8%8E%E6%BA%90%E7%A0%81%E7%9A%84%E7%AE%80%E5%8D%95%E8%B0%83%E8%AF%95/Cesium1.100%E7%89%88%E6%9C%AC%E5%90%8E%E5%B7%A5%E7%A8%8B%E7%9B%AE%E5%BD%95%E7%9A%84%E6%94%B9%E5%8F%98.png?raw=true" alt="分发包与源码包" style="zoom: 33%;" />
+
+**3 ** 如果你运行 `npm` 命令出现问题，也许是你的 node 版本过低导致的，package.json 中指定了 node 版本需要 `>=14.0.0` 。
 
 
 
@@ -968,7 +972,19 @@ GregorianDate（格里高利历）
 
 
 
-## 0 跑通 Hello World 示例
+## 0？封装的艺术
+
+这个篇章主要从 Cesium 的角度来讲讲她在封装上做的努力，如何能够理解的话，可以帮助你更好的了解 Cesium 源码的设计。属于 “ 内功 ” 。
+
+由于 Cesium 是一个三维地理空间框架，难免会涉及大量的与 WebGL 相关的概念，需要读者熟悉 WebGL 。
+
+
+
+
+
+
+
+## 0？ 跑通 Hello World 示例
 
 代码非常之简短，就可以搭建一个地球及其时间轴、图层控制等各类部件：
 
@@ -982,7 +998,7 @@ const viewer = new Cesium.Viewer("cesiumContainer");
 
 接下来，一点一点 dubugger ，看看整体流程。
 
-### 1 
+### 1 Viewer ~ 大一统API，奇点爆炸
 
 在 new Viewer 时，主要是创建一个基于 Cesium 的应用程序的基础小控件。这个小部件将所有标准的 Cesium 小控件组合在一起，形成一个可重用的包。通过使用混合（mixins），可以扩展这个小部件以添加对各种应用程序有用的功能。
 
@@ -1054,7 +1070,7 @@ import "../Widgets/widgets.css";
 
 到此，Cesium 已经创建了很多部件的容器了。接下来分析最重要的场景容器。
 
-### 2 
+### 2 CesiumWidget ~ 重要部件，大爆炸带来了空间和物体
 
 此时，看看 new CesiumWidget 做了哪些事情。
 
@@ -1076,6 +1092,15 @@ import "../Widgets/widgets.css";
 
 
 
-### 3 
+### 3 RAF ~ 渲染，爆炸带来了时间
 
-此时，在 new CesiumWidget 时开启了渲染循环。画面随时间的跳动一帧一帧的绘制和展示，动画效果也是随时间一帧帧地更新（此处还需要单开一个章节）。不管如何，时间必然会跳动 tick ，场景内的地球这些实体会在每一次时间 tick 后 render （这也就是一帧），让动画也是在随后的每一帧中随时间跳动，tick 后 animation。
+在 new CesiumWidget 的最后，开启了渲染循环并监听渲染错误的发生事件。画面随时间的跳动一帧一帧的绘制和展示，动画效果也是随时间一帧帧地更新（此处还需要单开一个章节）。不管如何，时间必然会跳动 tick ，场景内的地球这些实体会在每一次时间 tick 后 render （这也就是一帧），让动画也是在随后的每一帧中随时间跳动，tick 后 animation。
+
+
+
+### 4 Entity ~ 物体，上帝的预制物体
+
+类比 “ 预制菜 ” ，Entity 就是一个预制物体。可玩性比较低，但胜在简单好用。
+
+作为这个 Cesium 世界的创造者，相信你希望创建自己的建筑物，那么 Entity 就是一个很好积木。
+

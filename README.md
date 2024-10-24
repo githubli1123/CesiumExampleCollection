@@ -448,6 +448,10 @@ Cesium 的渲染循环，是在实例化 `Viewer` 时实例化了 `CesiumWidget`
 
 ## 02 Cesium中的地球渲染
 
+📌读前贴士：本文主要讲的是 Cesium 中地图影像如何在球上渲染。需要你牢记渲染中的四个流程：update ~~ beginFrame ~~ render ~~ endFrame ，其中render 流程是最繁杂的，其中会涉及复杂算法：关于 “ 如何选择到我们需要的瓦片 ” 这个问题，也会涉及到 “ 渲染命令 ” 这个封装概念。希望读者可以先去读完这些：
+
+
+
 <img src="https://github.com/githubli1123/CesiumExampleCollection/blob/main/Img/02Cesium%E7%9A%84%E5%9C%B0%E7%90%83%E6%B8%B2%E6%9F%93%E8%BF%87%E7%A8%8B/%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F%E4%BA%8B%E4%BB%B6%E4%B8%AD%E7%9A%84render%E8%8A%82%E7%82%B9.png?raw=true" alt="图片资源在该项目中可以找到：生命周期事件中的render节点"  />
 
 得找到哪些类是用于绘制地球的。
@@ -471,15 +475,16 @@ Cesium 的渲染循环，是在实例化 `Viewer` 时实例化了 `CesiumWidget`
 
 
 ```js
-  this._surface = new QuadtreePrimitive({
+ this._surface = new QuadtreePrimitive({
     tileProvider: new GlobeSurfaceTileProvider({
       terrainProvider: terrainProvider,
       imageryLayers: imageryLayerCollection,
       surfaceShaderSet: this._surfaceShaderSet,
     }),
-  });
+ });
 
-地表
+
+地表（primitives的一种）
   |---影像
   |---地形
   |---地表着色器
@@ -489,9 +494,7 @@ Cesium 的渲染循环，是在实例化 `Viewer` 时实例化了 `CesiumWidget`
 
 
 
-
-
-**① update过程**
+### update过程
 
 概述：update 过程主要做的事情是更新容器内所有 `ImageryLayer` 的可见状态，触发 layerShownOrHidden 事件。
 
@@ -510,36 +513,40 @@ Cesium 的渲染循环，是在实例化 `Viewer` 时实例化了 `CesiumWidget`
 
 下面介绍一下出现的类的主要作用：
 
-Globe：拥有 影像瓦片四叉树、地形瓦片四叉树 等。控制影像和地形的渲染和销毁。与地球相关的射线检测（找地球与射线的交点位置）。
+`Globe`：拥有 影像瓦片四叉树、地形瓦片四叉树 等。控制影像和地形的渲染和销毁。与地球相关的射线检测（找地球与射线的交点位置）。
 
-QuadtreePrimitive：拥有所有瓦片。提供四叉树的数据结构和对应渲染流程的具体的处理方法。
+`QuadtreePrimitive`：拥有所有瓦片。**提供四叉树的数据结构和对应渲染流程的具体的处理方法**。
 
-GlobeSurfaceTileProvider：拥有 椭球体，瓦片分割模式tilingScheme 。提供四叉树瓦片和对应渲染流程的具体的处理方法。
+`GlobeSurfaceTileProvider`：拥有 椭球体，瓦片分割模式 tilingScheme 。提供四叉树瓦片和对应渲染流程的具体的处理方法。
 
-ImageryLayerCollection：四叉树瓦片存放的容器，提供该容器对瓦片的增删改查等方法。
+`ImageryLayerCollection`：四叉树瓦片存放的容器，提供该容器对瓦片的增删改查等方法。
 
-QuadtreeTile：QuadtreePrimitive 的一个瓦片，保存着这个瓦片的空间信息并管理该层级下的资源数据（图片，地形数据等），提供空间信息的查询方法和对资源的清除方法。其中有一个重要的属性成员 data ，
+`QuadtreeTile`：QuadtreePrimitive 的一个瓦片，保存着这个瓦片的空间信息并管理该层级下的资源数据（图片，地形数据等），提供空间信息的查询方法和对资源的清除方法。其中有一个重要的属性成员 data ，
 
-TileImagery：*The assocation between a terrain tile and an imagery tile.*
+`TileImagery`：The assocation between a terrain tile and an imagery tile.
 
 
 
-**② beginFrame过程**
+🤔疑惑：相信大家刚刚开始都会有这样的不理解，为啥是 update 在最前面。从语义上看，形象的排序是不是这样的： beginFrame ~~ update ~~ render（updateAndExecuteCommands） ~~ endFrame。
+
+🧐解惑：暂时按下不表，先看看下面各个阶段的内容。
+
+
+
+### beginFrame过程
 
 概述：重置各种状态，释放所有瓦片资源，清除瓦片四叉树内的加载队列。
 
+详解：
 
-
-（1）Globe.prototype.beginFrame 这个方法主要做了以下事情：
+（1）`Globe.prototype.beginFrame` 这个方法主要做了以下事情：
 
 1. 检查是否需要加载更新海洋法线贴图资源。
 2. 设置地球表面瓦片提供者的各种参数，例如最大屏幕空间误差、缓存大小、加载限制等。
 3. 设置瓦片提供者的各种参数，包括光照距离、夜晚淡入淡出距离、海洋高光强度、水面遮罩等。
 4. 通道判断，若为渲染通道，才设置 `GlobeSurfaceTileProvider` 的一系列状态并把渲染职责递给 QuadtreePrimitive （即 Globe 实例中的 surface 对象调用 `beginFrame` 方法）。
 
-
-
-（2）QuadtreePrimitive.prototype.beginFrame 方法：✨重点
+（2）`QuadtreePrimitive.prototype.beginFrame` 方法：✨重点
 
 1. 无效化全部瓦片（即重置状态），`invalidateAllTiles()` 。
    - 条件：当 `GlobeSurfaceTileProvider` 改变了它的 `TerrainProvider` 时，会要求下一次起帧时 `QuadtreePrimitive` 重设全部的瓦片。
@@ -558,11 +565,11 @@ TileImagery：*The assocation between a terrain tile and an imagery tile.*
 
 
 
-**③ render过程**
+### render过程
 
 概述：根据帧状态选择要加载的新贴图，并创建渲染命令。
 
-
+详解：
 
 先后执行的函数：
 
@@ -600,13 +607,13 @@ getter 和 setter：获取或设置地球的材质外观。这可以是多个内
 3. fn createRenderCommandsForSelectedTiles(this, frameState); 🌟 为选择的 tiles 创建渲染指令 
 4. GlobeSurfaceTileProvider.prototype.endUpdate(frameState); 将创建好的 **绘图指令** 添加到帧状态对象（`FrameState`）中。
 
-QuadtreePrimitive.prototype.render 方法 分为三个阶段：
+`QuadtreePrimitive.prototype.render` 方法又可以细分为三个阶段：
 
-一阶段 tileProvider.beginUpdate
+一阶段  tileProvider.beginUpdate
 
 二阶段  selectTilesForRendering() 和 createRenderCommandsForSelectedTiles()
 
-三阶段 tileProvider.endUpdate
+三阶段  tileProvider.endUpdate
 
 ```
 一阶段
@@ -631,7 +638,6 @@ QuadtreePrimitive.prototype.render 方法 分为三个阶段：
 
 ```
 二阶段
-
 两个重要函数🌟
 
 selectTilesForRendering：瓦片可见性、是否被选择贯穿始终
@@ -742,9 +748,9 @@ Imagery 对象对应的 ImageryLayer 不是全透明的。
 
 
 
-**④ endFrame 过程**
+### endFrame 过程
 
-
+待写...
 
 
 
@@ -754,9 +760,9 @@ Imagery 对象对应的 ImageryLayer 不是全透明的。
 
 关于地球影像皮肤渲染的 “职责” 函数 在 Globe.render ，然后就把任务分为 this._material.update(); 和 this._surface.render(); 
 
-❓我们会在 executeCommandsInViewport 函数中发现这两个函数 `updateAndRenderPrimitives` 和 `executeCommands` ，我很诧异！为什么会先更新和渲染primitives然后再执行webgl命令，从命名语义上看，`updateAndRenderPrimitives` 函数已经把primitives给画到屏幕上了，那还执行 commands 个什么劲。
+❓我们会在 executeCommandsInViewport 函数中发现这两个函数 `updateAndRenderPrimitives` 和 `executeCommands` ，我很诧异！为什么会先更新和渲染primitives然后再执行webgl命令，从命名语义上看，`updateAndRenderPrimitives` 函数已经把primitives给画到屏幕上了，那还需要执行 commands 吗。
 
-✅仔细看看`updateAndRenderPrimitives` 就破案了，这里的 primitives 是指的 globe，渲染的是 globe。难道 `executeCommands`  就一点都不管 gobe 的渲染了吗？目前我们假设是的。
+✅仔细看看 `updateAndRenderPrimitives` 就明白了，这里的 primitives 是指的 globe，渲染的是 globe。难道 `executeCommands`  就一点都不管 gobe 的渲染了吗？目前我们假设是的。
 
 那么这里就要给大家看一张图，这张图表达了 数据，场景和渲染器 之间的关系，同时归纳总结了 primitives 这个 “数据集”：
 
@@ -774,19 +780,13 @@ Imagery 对象对应的 ImageryLayer 不是全透明的。
 
 
 
-CesiumWidget
-
-Scene
-
-Globe
-
-Ellipsoid
-
-QuadtreePrimitive
 
 
 
-Globe 的作用：
+
+## 0？Entity、Primitive 
+
+
 
 
 
@@ -972,11 +972,87 @@ GregorianDate（格里高利历）
 
 
 
-## 0？封装的艺术
+## 0？从 Cesium 中学习到的优雅
+
+### 封装的艺术
 
 这个篇章主要从 Cesium 的角度来讲讲她在封装上做的努力，如何能够理解的话，可以帮助你更好的了解 Cesium 源码的设计。属于 “ 内功 ” 。
 
 由于 Cesium 是一个三维地理空间框架，难免会涉及大量的与 WebGL 相关的概念，需要读者熟悉 WebGL 。
+
+
+
+**1 属性值的跨类修改**（瞎起的名字）
+
+类A中的属性不暴露给类B，或者说类B不要随意变更类A中的属性。而是让类B通过调用类A中提供的方法来修改类A中的属性状态。在 Cesium 中可以找到这样的设计原则。
+
+类A：
+
+```js
+function QuadtreePrimitive(){
+	this._tilesInvalidated = false;
+}
+
+QuadtreePrimitive.prototype.invalidateAllTiles = function () {
+  this._tilesInvalidated = true;
+};
+
+function invalidateAllTiles(primitive) {
+  // Clear the replacement queue
+  // Free and recreate the level zero tiles.
+}
+```
+
+类B：
+
+```js
+Object.defineProperties(GlobeSurfaceTileProvider.prototype, {
+  terrainProvider: {
+    get: function () {
+      return this._terrainProvider;
+    },
+    set: function (terrainProvider) {
+      if (this._terrainProvider === terrainProvider) {
+        return;
+      }
+
+      this._terrainProvider = terrainProvider;
+
+      if (defined(this._quadtree)) {
+        this._quadtree.invalidateAllTiles();
+      }
+    },
+  },
+});
+
+```
+
+
+
+
+
+### 命名的艺术
+
+一个良好的命名规范可以让我们更加从容地理解库中大量繁杂的内容，更好地记忆源码结构与查看源码接口。
+
+### 优化的艺术
+
+#### 只改已经改变的
+
+例：
+
+
+
+例：
+
+在渲染引擎和图形编程中，“脏数据”通常指的是那些需要重新计算或更新的数据。例如：**着色器更新**：在渲染引擎中，“脏数据”可以用来标记那些需要重新编译或更新的着色器。如果着色器的状态或配置发生变化，就需要重新编译或更新，以确保渲染结果的一致性和准确性。当然，你也可以这么理解：在这一时刻或者场景下，当前存在的着色器有一些是可以直接使用的，有一些是不可以直接使用的。不可以直接使用的就是脏的，对其进行标记后在适当时间更新。
+
+在 Globe 类中，有这样一个函数 `makeShadersDirty` 
+
+```
+```
+
+
 
 
 

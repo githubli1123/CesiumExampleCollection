@@ -650,7 +650,7 @@ selectTilesForRendering：瓦片可见性、是否被选择贯穿始终
 创建零级瓦片依赖 QuadtreeTile 的静态方法 createLevelZeroTiles() ，传入瓦片四叉树上的瓦片分割模式参数 tilingScheme 来创建零级瓦片。
 createLevelZeroTiles() 核心是 根据传入的 tilingScheme 参数来得到 WebMercator 是正方形区域还是经纬度长方形区域，接着用一个简单的两层循环不断创建单个 QuadtreeTile 并添加到返回结果中，最终给到零级瓦片 _levelZeroTiles。
 
-⭕我需要明白四叉树的实现方式，那么我就需要去了解四叉树类的成员和方法。这个渲染流程的分析暂时搁置，先去分析一下四叉树的实现。详情见...
+⭕我需要明白四叉树的实现方式，那么我就需要去了解四叉树类的成员和方法。这个渲染流程的分析暂时搁置，先去分析一下四叉树的实现。详情见《从Cesium中学习到的优雅》的瓦片四叉树算法。
 
 3. 递归遍历零级瓦片🔄
 当执行这一步时，表明零级瓦片数组必定存在零级瓦片。然后做一些简单的相机运算，状态、数据运算，紧接着以深度优先，从近到远的顺序遍历零级瓦片数组。
@@ -1092,7 +1092,7 @@ function CesiumWidget(options){
 
 例：
 
-
+~
 
 例：
 
@@ -1105,7 +1105,141 @@ function CesiumWidget(options){
 
 #### 瓦片四叉树算法
 
+讨论的情况是：处于 3D 视图模式，加载影像贴图。
 
+涉及到的类：
+
+- QuadtreePrimitive
+
+
+
+~
+
+我的设想：
+
+如何让地图引擎知道需要加载哪个层级（L）下的哪部分（X Y）图片：通过摄像机视角来计算经纬度范围。
+
+~
+
+实际上：
+
+四叉树算法不要求2d平面一定是正方形。那为什么要分下面两个情况？
+
+情况1：web墨卡托投影：因为投影方式是将地球表面投影到正方形上。一颗四叉树。
+
+情况2：使用经纬度。**直接使用经纬度范围** 作为坐标值域来做四叉树递归划分瓦片，那么就需要左右两棵。2：
+
+原因：左右两棵树的策略。**左树**：负责处理经度范围从-180度到0度的部分。**右树**：负责处理经度范围从0度到180度的部分。这样做的好处是：**简化处理**，可以更容易地处理跨越180度经线的问题。**均匀分割**，可以在每个纬度带上更均匀地分割瓦片，避免高纬度地区的过度密集。
+
+对于这两种情况地区分就交给了零级瓦片 _levelZeroTiles 。下面代码是如何创建零级瓦片
+
+零级瓦片以 result 返回给 QuadtreePrimitive 类的 _levelZeroTiles 属性。
+
+```js
+QuadtreeTile.createLevelZeroTiles = function (tilingScheme) {
+  //>>includeStart('debug', pragmas.debug);
+  if (!defined(tilingScheme)) {
+    throw new DeveloperError("tilingScheme is required.");
+  }
+  //>>includeEnd('debug');
+
+  const numberOfLevelZeroTilesX = tilingScheme.getNumberOfXTilesAtLevel(0);
+  const numberOfLevelZeroTilesY = tilingScheme.getNumberOfYTilesAtLevel(0);
+
+  const result = new Array(numberOfLevelZeroTilesX * numberOfLevelZeroTilesY); // result 到底是多大的数组？<=>不同的tilingScheme划分方式不同，问划分规则。默认 零级L0下X=2，Y=1。
+
+  let index = 0;
+  for (let y = 0; y < numberOfLevelZeroTilesY; ++y) {
+    for (let x = 0; x < numberOfLevelZeroTilesX; ++x) {
+      result[index++] = new QuadtreeTile({
+        tilingScheme: tilingScheme,
+        x: x,
+        y: y,
+        level: 0,
+      });
+    }
+  }
+
+  return result;
+};
+```
+
+默认划分规则：
+
+```js
+function GeographicTilingScheme(options) {
+  options = defaultValue(options, defaultValue.EMPTY_OBJECT);
+
+  this._ellipsoid = defaultValue(options.ellipsoid, Ellipsoid.WGS84);
+  this._rectangle = defaultValue(options.rectangle, Rectangle.MAX_VALUE);
+  this._projection = new GeographicProjection(this._ellipsoid);
+  this._numberOfLevelZeroTilesX = defaultValue(
+    options.numberOfLevelZeroTilesX,
+    2
+  ); // 数字2可以看出是使用经纬度的情况。因为默认使用 WGS84 
+  this._numberOfLevelZeroTilesY = defaultValue(
+    options.numberOfLevelZeroTilesY,
+    1
+  );
+}
+```
+
+Q：如何创建 L1 瓦片，关注注释中的 ⭐MVP 。
+
+通过为 QuadtreeTile 类内部打断点来追踪到了何时何处创建 level 0 以及 level 1 的瓦片。
+
+```js
+// QuadtreePrimitive.js
+function selectTilesForRendering(primitive, frameState){
+  // ✅ level 0
+  // We can't render anything before the level zero tiles exist.
+  let i;
+  const tileProvider = primitive._tileProvider;
+  if (!defined(primitive._levelZeroTiles)) {
+    const tilingScheme = tileProvider.tilingScheme;
+    if (defined(tilingScheme)) {
+      const tilingScheme = tileProvider.tilingScheme;
+      primitive._levelZeroTiles = QuadtreeTile.createLevelZeroTiles(
+        tilingScheme
+      ); // ⭐ MVP
+      const numberOfRootTiles = primitive._levelZeroTiles.length;
+      if (rootTraversalDetails.length < numberOfRootTiles) {
+        rootTraversalDetails = new Array(numberOfRootTiles);
+        for (i = 0; i < numberOfRootTiles; ++i) {
+          if (rootTraversalDetails[i] === undefined) {
+            rootTraversalDetails[i] = new TraversalDetails();
+          }
+        }
+      }
+    } else {
+      return;
+    }
+  }
+  
+  // ✅ level 1,2,3 ... 
+  // Traverse in depth-first, near-to-far order.
+  for (i = 0, len = levelZeroTiles.length; i < len; ++i) {
+    tile = levelZeroTiles[i];
+    primitive._tileReplacementQueue.markTileRendered(tile);
+    if (!tile.renderable) {
+      queueTileLoad(primitive, primitive._tileLoadQueueHigh, tile, frameState);
+      ++debug.tilesWaitingForChildren;
+    } else {
+      visitIfVisible(
+        primitive,
+        tile,
+        tileProvider,
+        frameState,
+        occluders,
+        false,
+        rootTraversalDetails[i]
+      ); // ⭐ MVP
+    }
+  }
+}
+```
+
+接下来就是关注 function visitIfVisible 中的 visitTile 函数，这个函数很长。270+行
 
 
 

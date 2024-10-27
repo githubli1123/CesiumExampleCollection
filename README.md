@@ -648,25 +648,26 @@ selectTilesForRendering：瓦片可见性、是否被选择贯穿始终
 2. 判断零级瓦片的存在和创建零级瓦片 _levelZeroTiles：
 在零级贴图存在之前，我们无法渲染任何内容。不存在则要创建出来。若瓦片四叉树类中的成员 tileProvider（GlobeSurfaceTileProvider） 不存在，是无法创建零级瓦片的。
 创建零级瓦片依赖 QuadtreeTile 的静态方法 createLevelZeroTiles() ，传入瓦片四叉树上的瓦片分割模式参数 tilingScheme 来创建零级瓦片。
-createLevelZeroTiles() 核心是 根据传入的 tilingScheme 参数来得到 WebMercator 是正方形区域还是经纬度长方形区域，接着用一个简单的两层循环不断创建单个 QuadtreeTile 并添加到返回结果中，最终给到零级瓦片 _levelZeroTiles。
+createLevelZeroTiles()方法的核心是 根据传入的 tilingScheme 参数来得到投影地图是正方形区域还是经纬度长方形区域，接着用一个简单的两层循环不断创建单个 QuadtreeTile实例 并添加到返回结果中，最终给到零级瓦片 _levelZeroTiles。
 
-⭕我需要明白四叉树的实现方式，那么我就需要去了解四叉树类的成员和方法。这个渲染流程的分析暂时搁置，先去分析一下四叉树的实现。详情见《从Cesium中学习到的优雅》的瓦片四叉树算法。
+⭕如果你现在就需要明白四叉树的实现方式，那推荐去了解四叉树相关类的成员和方法。这个渲染流程的分析暂时搁置，先分析四叉树的实现。详情见《从Cesium中学习到的优雅》的瓦片四叉树算法。
 
 3. 递归遍历零级瓦片🔄
 当执行这一步时，表明零级瓦片数组必定存在零级瓦片。然后做一些简单的相机运算，状态、数据运算，紧接着以深度优先，从近到远的顺序遍历零级瓦片数组。
 具体的代码逻辑是：遍历零级瓦片数组，对每个瓦片元素判断是否可以渲染，不能则代表此四叉树瓦片还没下载完数据，将它放入 高优先加载队列 📋🔜 ，在 endFrame 终帧过程中执行下载操作，可渲染则执行 fn visitIfVisible() 函数。
 
-优先级：是否渲染 tile.renderable，瓦片被细化且瓦片的子瓦片是否upsampled，
+优先级：1.是否渲染 tile.renderable，2.瓦片被细化且瓦片的子瓦片是否upsampled，
 
 fn visitIfVisible()
 3.1 计算是否可见，剔除瓦片：
 	可见：立即进入递归访问瓦片的函数 visitTile() 。
+	    fn visitTile()：
 		3.1.1 检查瓦片是否可以细化（refine）：
 		如果瓦片可以细分，代码会检查其四个子瓦片（西南、东南、西北、东北）
 		是否都是通过上采样（upsampled）得到的。
 		如果所有子瓦片都是通过上采样得到的，那么就没有必要渲染这些子瓦片，直接渲染当前瓦片，
 		将这个无需等待子元素的已经被渲染的 tile 放入 中优先加载队列 📋🔜 。
-		同时，确保这些子瓦片不会被卸载，不忘记她们是被 upsampled 来的。
+		同时，确保这些子瓦片不会被卸载，忘记她们是被 upsampled 来的。
 		
 		3.1.2 细分瓦片：
 		如果子瓦片不是全部通过上采样得到的，不需要将这些子瓦片添加到队列中。
@@ -993,7 +994,7 @@ function QuadtreePrimitive(){
 	this._tilesInvalidated = false;
 }
 
-QuadtreePrimitive.prototype.invalidateAllTiles = function () {
+QuadtreePrimitive.prototype.invalidateAllTiles = function () { // ✅通过接口
   this._tilesInvalidated = true;
 };
 
@@ -1019,12 +1020,11 @@ Object.defineProperties(GlobeSurfaceTileProvider.prototype, {
       this._terrainProvider = terrainProvider;
 
       if (defined(this._quadtree)) {
-        this._quadtree.invalidateAllTiles();
+        this._quadtree.invalidateAllTiles();  // ✅使用接口修改值
       }
     },
   },
 });
-
 ```
 
 **方法二**：使用 Object.defineProperties 上添加属性property1的getter和setter，类上的私有属性名为 _property1 。类A中的 “ 私有属性 ” _property1 不暴露给类B，而是让类B通过 修改类A中提供的 property1 来修改类A中的私有属性状态。在 Cesium 中可以找到这样的设计原则。这个更加侧重于赋值成员属性变量时要额外做操作的情况。
@@ -1105,49 +1105,84 @@ function CesiumWidget(options){
 
 #### 瓦片四叉树算法
 
-讨论的情况是：处于 3D 视图模式，加载影像贴图。
+流程图有待完成......
 
-涉及到的类：
+-
 
-- QuadtreePrimitive
-
-
-
-~
-
-我的设想：
-
-如何让地图引擎知道需要加载哪个层级（L）下的哪部分（X Y）图片：通过摄像机视角来计算经纬度范围。
-
-~
-
-实际上：
-
-四叉树算法不要求2d平面一定是正方形。那为什么要分下面两个情况？
-
-情况1：web墨卡托投影：因为投影方式是将地球表面投影到正方形上。一颗四叉树。
-
-情况2：使用经纬度。**直接使用经纬度范围** 作为坐标值域来做四叉树递归划分瓦片，那么就需要左右两棵。2：
-
-原因：左右两棵树的策略。**左树**：负责处理经度范围从-180度到0度的部分。**右树**：负责处理经度范围从0度到180度的部分。这样做的好处是：**简化处理**，可以更容易地处理跨越180度经线的问题。**均匀分割**，可以在每个纬度带上更均匀地分割瓦片，避免高纬度地区的过度密集。
-
-对于这两种情况地区分就交给了零级瓦片 _levelZeroTiles 。下面代码是如何创建零级瓦片
-
-零级瓦片以 result 返回给 QuadtreePrimitive 类的 _levelZeroTiles 属性。
+**瓦片节点类：QuadtreeTile**
 
 ```js
+function QuadtreeTile(options) {
+  this._tilingScheme = options.tilingScheme;
+  // ⭐ _x _y _level 表示在瓦片四叉树中的位置
+  // ⭐⭐ _rectangle：根据上面四叉树类求取在映射在地球上的 弧面 。
+  //                  这在后面会用于判断该瓦片是否位于摄像机视图中
+  this._x = options.x;
+  this._y = options.y;
+  this._level = options.level;
+  this._parent = options.parent;
+  this._rectangle = this._tilingScheme.tileXYToRectangle(
+    this._x,
+    this._y,
+    this._level
+  );
+
+  // 🔖四个子节点
+  this._southwestChild = undefined;
+  this._southeastChild = undefined;
+  this._northwestChild = undefined;
+  this._northeastChild = undefined;
+
+  // TileReplacementQueue gets/sets these private properties.
+  this.replacementPrevious = undefined;
+  this.replacementNext = undefined;
+
+  this._distance = 0.0;
+  this._loadPriority = 0.0;
+
+  this._customData = [];
+  this._frameUpdated = undefined;
+  this._lastSelectionResult = TileSelectionResult.NONE;
+  this._lastSelectionResultFrame = undefined;
+  this._loadedCallbacks = {};
+
+  this.state = QuadtreeTileLoadState.START;
+  this.renderable = false;
+  this.upsampledFromParent = false;
+  this.data = undefined;  // ⭐重要
+}
+```
+
+```js
+Object.defineProperties(QuadtreeTile.prototype, {
+  // ...
+  southwestChild: {
+    get: function () {
+      if (!defined(this._southwestChild)) {
+        this._southwestChild = new QuadtreeTile({ // ⭐由此看出瓦片子节点的产生
+          tilingScheme: this.tilingScheme,
+          x: this.x * 2,
+          y: this.y * 2 + 1,
+          level: this.level + 1,
+          parent: this,
+        });
+      }
+      return this._southwestChild;
+    },
+  },
+  // ...
+});
+```
+
+```js
+// ⭐重要的静态方法：创建零级瓦片。瓦片四叉树根节点
 QuadtreeTile.createLevelZeroTiles = function (tilingScheme) {
-  //>>includeStart('debug', pragmas.debug);
   if (!defined(tilingScheme)) {
     throw new DeveloperError("tilingScheme is required.");
   }
-  //>>includeEnd('debug');
-
   const numberOfLevelZeroTilesX = tilingScheme.getNumberOfXTilesAtLevel(0);
   const numberOfLevelZeroTilesY = tilingScheme.getNumberOfYTilesAtLevel(0);
-
   const result = new Array(numberOfLevelZeroTilesX * numberOfLevelZeroTilesY); // result 到底是多大的数组？<=>不同的tilingScheme划分方式不同，问划分规则。默认 零级L0下X=2，Y=1。
-
   let index = 0;
   for (let y = 0; y < numberOfLevelZeroTilesY; ++y) {
     for (let x = 0; x < numberOfLevelZeroTilesX; ++x) {
@@ -1159,24 +1194,36 @@ QuadtreeTile.createLevelZeroTiles = function (tilingScheme) {
       });
     }
   }
-
   return result;
 };
 ```
 
-默认划分规则：
+
+
+**影响零级瓦片生成结果的类：TilingScheme** 
+
+TilingScheme 是抽象类。TilingScheme 有两个实现类 ：WebMercatorTilingScheme 、GeographicTilingScheme 这两个类会影响创建零级瓦片。
+
+四叉树算法并不要求2d平面一定是正方形，也没有限制根节点数量，只是一般默认是一个根节点。那为什么要分下面两个情况？
+
+- 情况1：web墨卡托投影：因为投影方式是将地球表面投影到正方形上。一颗四叉树。 Cesium 中 WebMercatorTilingScheme.js 类。
+
+- 情况2：使用经纬度。**直接使用经纬度范围** 作为坐标值域来做四叉树递归划分瓦片，那么就需要左右两棵。Cesium 中 GeographicTilingScheme 类。
+
+原因：左右两棵树的策略。**左树**：负责处理经度范围从-180度到0度的部分。**右树**：负责处理经度范围从0度到180度的部分。这样做的好处是：**简化处理**，可以更容易地处理跨越180度经线的问题。**均匀分割**，可以在每个纬度带上更均匀地分割瓦片，避免高纬度地区的过度密集。
+
+默认的创建零级瓦片是基于 GeographicTilingScheme 类的：
 
 ```js
 function GeographicTilingScheme(options) {
   options = defaultValue(options, defaultValue.EMPTY_OBJECT);
-
   this._ellipsoid = defaultValue(options.ellipsoid, Ellipsoid.WGS84);
   this._rectangle = defaultValue(options.rectangle, Rectangle.MAX_VALUE);
   this._projection = new GeographicProjection(this._ellipsoid);
   this._numberOfLevelZeroTilesX = defaultValue(
     options.numberOfLevelZeroTilesX,
     2
-  ); // 数字2可以看出是使用经纬度的情况。因为默认使用 WGS84 
+  ); // 数字2和下面数字1可以看出零级瓦片数组将会有两个节点。且默认使用 WGS84 椭球体
   this._numberOfLevelZeroTilesY = defaultValue(
     options.numberOfLevelZeroTilesY,
     1
@@ -1184,9 +1231,115 @@ function GeographicTilingScheme(options) {
 }
 ```
 
-Q：如何创建 L1 瓦片，关注注释中的 ⭐MVP 。
+```js
+// ⭐重要方法： 由 瓦片四叉树上的位置 得到 经纬度坐标范围
+GeographicTilingScheme.prototype.tileXYToRectangle = function (
+  x,
+  y,
+  level,
+  result
+) {
+  const rectangle = this._rectangle;
 
-通过为 QuadtreeTile 类内部打断点来追踪到了何时何处创建 level 0 以及 level 1 的瓦片。
+  const xTiles = this.getNumberOfXTilesAtLevel(level);
+  const yTiles = this.getNumberOfYTilesAtLevel(level);
+
+  const xTileWidth = rectangle.width / xTiles;
+  const west = x * xTileWidth + rectangle.west;
+  const east = (x + 1) * xTileWidth + rectangle.west;
+
+  const yTileHeight = rectangle.height / yTiles;
+  const north = rectangle.north - y * yTileHeight;
+  const south = rectangle.north - (y + 1) * yTileHeight;
+
+  if (!defined(result)) {
+    result = new Rectangle(west, south, east, north);
+  }
+
+  result.west = west;
+  result.south = south;
+  result.east = east;
+  result.north = north;
+  return result;
+};
+```
+
+
+
+**影响瓦片四叉树生成的类：Camera** 
+
+使用瓦片四叉树算法就是为了只显示看到的区域，那么自然是 Camera 类。对于四叉树生成影响大的属性就是 positionCartographic 这个 Cartographic 类实例。Q： camera 的 positionCartographic 属性值是怎么变的，会在 何处 自动修改默认值。A：updateMembers 函数中
+
+```js
+function Camera(scene) {
+  // ...
+
+  /**
+   * The position of the camera. 不同坐标表示法
+   *
+   * @type {Cartesian3}
+   */
+  this.position = new Cartesian3();
+  this._position = new Cartesian3();
+  this._positionWC = new Cartesian3();
+  this._positionCartographic = new Cartographic(); // ⭐影响四叉树生成的关键属性
+  this._oldPositionWC = undefined;
+
+  // ...
+
+  // set default view
+  rectangleCameraPosition3D(
+    this,
+    Camera.DEFAULT_VIEW_RECTANGLE,
+    this.position,
+    true
+  );
+  // ...
+}
+
+function updateMembers(camera){
+    
+    // 如果是SCENE3D或者MORPHING模式，每一帧都会尝试修改
+    // 可以尝试在此调试并且理解如何变幻
+    camera._positionCartographic = camera._projection.ellipsoid.cartesianToCartographic(
+        camera._positionWC,
+        camera._positionCartographic
+     );
+}
+```
+
+```js
+// 例子中默认的 positionCartographic 
+{
+	height: 27674111.713483825
+	latitude: 0.6137483935089934
+	longitude: -1.439896632895322
+}
+```
+
+我看不明白零级瓦片数组中元素中的 rectangle 属性值，如下
+
+```
+// 第一个元素
+east: 0
+north: 1.5707963267948966
+south: -1.5707963267948966
+west: -3.141592653589793
+
+// 第二个元素
+east: 3.141592653589793
+north: 1.5707963267948966
+south: -1.5707963267948966
+west: 0
+```
+
+这应该涉及地理相关知识，比如 地理方面的坐标系
+
+
+
+**四叉树的管理者：QuadtreePrimitive** 
+
+控制四叉树节点的生成（选择瓦片节点）
 
 ```js
 // QuadtreePrimitive.js
@@ -1238,6 +1391,54 @@ function selectTilesForRendering(primitive, frameState){
   }
 }
 ```
+
+
+
+四叉树节点似乎会保留下来并且保存图片资源。
+
+
+
+🛠️可以使用如下代码来开启瓦片网格显示：
+
+```js
+const layer = new Cesium.ImageryLayer(new Cesium.TileCoordinatesImageryProvider());
+layer.alpha = 0.5;
+layer.show = true;
+layer.name = 'Level-x-y瓦片网格';
+viewer.imageryLayers.add(layer);
+```
+
+
+
+
+
+讨论的情况是：处于 3D 视图模式，加载影像贴图。
+
+涉及到的类：
+
+- QuadtreePrimitive
+
+
+
+~
+
+我的设想：
+
+如何让地图引擎知道需要加载哪个层级（L）下的哪部分（X Y）图片：通过摄像机视角来计算经纬度范围。
+
+~
+
+实际上：
+
+
+
+对于这两种情况在零级瓦片 _levelZeroTiles 上的表现就在零级瓦片数组的元素个数上。🤔关于创建零级瓦片的相关细节：
+
+零级瓦片以 result 返回给 QuadtreePrimitive 类的 _levelZeroTiles 属性。默认划分规则是基于 GeographicTilingScheme 类。
+
+Q：四叉树的分裂。即如何创建 L1 瓦片以及后续层级的瓦片，关注注释中的 ⭐MVP 。
+
+通过为 QuadtreeTile 类内部打断点来追踪到了何时何处创建 level 0 以及 level 1 的瓦片。可以追踪到重要的逻辑在 selectTilesForRendering 函数中
 
 接下来就是关注 function visitIfVisible 中的 visitTile 函数，这个函数很长。270+行
 

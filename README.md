@@ -494,7 +494,7 @@ Cesium 的渲染循环，是在实例化 `Viewer` 时实例化了 `CesiumWidget`
 
 
 
-### update过程
+### 一、update过程
 
 概述：update 过程主要做的事情是更新容器内所有 `ImageryLayer` 的可见状态，触发 layerShownOrHidden 事件。
 
@@ -533,7 +533,7 @@ Cesium 的渲染循环，是在实例化 `Viewer` 时实例化了 `CesiumWidget`
 
 
 
-### beginFrame过程
+### 二、beginFrame过程
 
 概述：重置各种状态，释放所有瓦片资源，清除瓦片四叉树内的加载队列。
 
@@ -565,7 +565,7 @@ Cesium 的渲染循环，是在实例化 `Viewer` 时实例化了 `CesiumWidget`
 
 
 
-### render过程
+### 三、render过程
 
 概述：根据帧状态选择要加载的新贴图，并创建渲染命令。
 
@@ -749,13 +749,27 @@ Imagery 对象对应的 ImageryLayer 不是全透明的。
 
 
 
-### endFrame 过程
+### 四、endFrame 过程
 
 待写...
 
 
 
 
+
+### 五、其他细节上的疑问
+
+Q：在 WebGL中有世界空间、物体局部空间、观察空间、裁剪空间、视口空间，那地球是在世界空间的原点吗？如何定位到地球的 (0,0) 处位置到屏幕中心？难道将 (0,0) 点固定在世界空间的x轴上吗，也就是地球的局部空间上，地球中心点在局部空间原点上，局部空间原点与世界空间原点重合？请在源码中找到依据。
+
+A：得找 globe 的相关的 command 。GlobeSurfaceTileProvider.prototype.endUpdate ==> addDrawCommandsForTile 打断点看 command 到底是啥，然后找到 **_bufferTarget** 属性，猜测应该是保存着 buffer 数据的指针，那就全局搜索这个属性找到所在类，然后打印出来数据，但是是没有数据的，因为写入数据的地方不在 Buffer 类这里
+
+Q：如何将 影像tile 正确地贴到地球上？如果是 WebGL 中的球的话，将球面映射到二维平面，实现纹理贴图。
+
+A：如果对于地球的物体局部空间，地球的
+
+
+
+可以尝试一下添加 Axis 辅助操作，[cesium模型的旋转、平移和缩放带辅助操作_cesium 模型旋转平移](https://blog.csdn.net/weixin_44265800/article/details/127238460)
 
 
 
@@ -1438,9 +1452,9 @@ viewer.imageryLayers.add(layer);
 
 Q：四叉树的分裂。即如何创建 L1 瓦片以及后续层级的瓦片，关注注释中的 ⭐MVP 。
 
-通过为 QuadtreeTile 类内部打断点来追踪到了何时何处创建 level 0 以及 level 1 的瓦片。可以追踪到重要的逻辑在 selectTilesForRendering 函数中
+A：通过为 QuadtreeTile 类内部打断点来追踪到了何时何处创建 level 0 以及 level 1 的瓦片。可以追踪到重要的逻辑在 selectTilesForRendering 函数中
 
-接下来就是关注 function visitIfVisible 中的 visitTile 函数，这个函数很长。270+行
+接下来就是关注 function visitIfVisible 中的 visitTile 函数，这个函数很长。270+行。 visitTile 函数
 
 
 
@@ -1567,4 +1581,30 @@ import "../Widgets/widgets.css";
 类比 “ 预制菜 ” ，Entity 就是一个预制物体。可玩性比较低，但胜在简单好用。
 
 作为这个 Cesium 世界的创造者，相信你希望创建自己的建筑物，那么 Entity 就是一个很好积木。
+
+
+
+## 0？关于 Cesium 的若干变更
+
+### 一、地形夸张 API 变更
+
+变更日志：[cesium/CHANGES.md at 1.116 · CesiumGS/cesium · GitHub](https://github.com/CesiumGS/cesium/blob/1.116/CHANGES.md)
+
+PR记录：[Remove deprecated `Globe.terrainExaggeration` by jjspace · Pull Request #11905 · CesiumGS/cesium · GitHub](https://github.com/CesiumGS/cesium/pull/11905)
+
+相关 Issue：https://github.com/CesiumGS/cesium/issues/11936 ， https://github.com/CesiumGS/cesium/issues/11940
+
+相关文章：[cesium 1.116版本地形和实体共同夸张问题](https://blog.csdn.net/liubangbo/article/details/140626311)，[cesium实现地形夸张效果（过时API）](https://blog.csdn.net/weixin_45782925/article/details/123515549)
+
+相关实战：[控制部分瓦片地形夸张（待完成）]() ，
+
+
+
+## 0？WebGL相关概念 ~ 补习
+
+Vertex Array：顶点数组（Vertex Array）是一组顶点数据，每个顶点由多个属性组成，如位置（position）、纹理坐标（texture coordinates）、法线（normal）等。在早期的OpenGL版本中，顶点数据通常是以数组的形式传递给显卡的。例如，你可以分别定义位置数组、纹理坐标数组和法线数组，并将它们传递给OpenGL API。
+
+Vertex Array Object（VAO）：首先，它不是Buffer-Object，所以不用作存储数据；其次，它针对 ” 顶点 “ 而言，也就是说它跟 ” 顶点的绘制 “ 息息相关，这相当于 ” 与VBO息息相关 “。
+
+Vertex Buffer Object（VBO）：VBO归根到底是显卡存储空间里的一块缓存区(Buffer)而已，这个Buffer有它的名字(VBO的ID)，在GPU的某处记录着这个ID和对应的显存地址（或者地址偏移，类似内存）。
 

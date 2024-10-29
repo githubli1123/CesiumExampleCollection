@@ -761,7 +761,7 @@ Imagery 对象对应的 ImageryLayer 不是全透明的。
 
 Q：在 WebGL中有世界空间、物体局部空间、观察空间、裁剪空间、视口空间，那地球是在世界空间的原点吗？如何定位到地球的 (0,0) 处位置到屏幕中心？难道将 (0,0) 点固定在世界空间的x轴上吗，也就是地球的局部空间上，地球中心点在局部空间原点上，局部空间原点与世界空间原点重合？请在源码中找到依据。
 
-A：得找 globe 的相关的 command 。GlobeSurfaceTileProvider.prototype.endUpdate ==> addDrawCommandsForTile 打断点看 command 到底是啥，然后找到 **_bufferTarget** 属性，猜测应该是保存着 buffer 数据的指针，那就全局搜索这个属性找到所在类，然后打印出来数据，但是是没有数据的，因为写入数据的地方不在 Buffer 类这里
+A：得找 globe 的相关的 command 。GlobeSurfaceTileProvider.prototype.endUpdate ==> addDrawCommandsForTile 打断点看 command 到底是啥，然后找到 **_bufferTarget** 属性，猜测应该是保存着 buffer 数据的指针，那就全局搜索这个属性找到所在类，然后打印出来数据，但是是没有数据的，因为写入数据的地方不在 Buffer 类这里，那就打印 command 里的数据，但是看不懂内存查看器。
 
 Q：如何将 影像tile 正确地贴到地球上？如果是 WebGL 中的球的话，将球面映射到二维平面，实现纹理贴图。
 
@@ -770,6 +770,8 @@ A：如果对于地球的物体局部空间，地球的
 
 
 可以尝试一下添加 Axis 辅助操作，[cesium模型的旋转、平移和缩放带辅助操作_cesium 模型旋转平移](https://blog.csdn.net/weixin_44265800/article/details/127238460)
+
+
 
 
 
@@ -1458,7 +1460,22 @@ A：通过为 QuadtreeTile 类内部打断点来追踪到了何时何处创建 l
 
 
 
+#### 背面剔除
 
+可以查看相关 command 生成部分源码
+
+**背面剔除条件判断**：
+
+```javascript
+const backFaceCulling =
+    tileProvider.backFaceCulling && !cameraUnderground && !translucent;
+```
+
+- `tileProvider.backFaceCulling`：表示是否启用背面剔除。
+- `!cameraUnderground`：表示摄像机不在地下。如果摄像机位于地下，则可能需要禁用背面剔除，以确保能看到地下模型的内部。
+- `!translucent`：表示是否透明。如果对象是透明的，则可能需要禁用背面剔除，以防止透明物体出现不正确的剔除现象。
+
+这三个条件结合起来决定了是否启用背面剔除。
 
 
 
@@ -1607,4 +1624,8 @@ Vertex Array：顶点数组（Vertex Array）是一组顶点数据，每个顶�
 Vertex Array Object（VAO）：首先，它不是Buffer-Object，所以不用作存储数据；其次，它针对 ” 顶点 “ 而言，也就是说它跟 ” 顶点的绘制 “ 息息相关，这相当于 ” 与VBO息息相关 “。
 
 Vertex Buffer Object（VBO）：VBO归根到底是显卡存储空间里的一块缓存区(Buffer)而已，这个Buffer有它的名字(VBO的ID)，在GPU的某处记录着这个ID和对应的显存地址（或者地址偏移，类似内存）。
+
+
+
+## 0？Cesium 中内置的调试变量
 

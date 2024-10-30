@@ -1,0 +1,146 @@
+<!--
+ * @Author: ZJ Wu
+ * @Date: 2024-04-26 11:03:15
+ * @LastEditTime: 2024-04-26 17:07:37
+ * @Description: ： 📌对顶点索引缓冲区绑定到目标gl.ELEMENT_ARRAY_BUFFER上后传递数据即可。
+                      后面不需要做，应该是后面的操作是为了 shader处理（乱猜的），
+                      而这个缓冲区只是一个为其他缓冲区顶点位置做标识的，不是为了改变图形的（乱猜的）。
+                    📌gl.drawElements(gl.TRIANGLES, n, gl.UNSIGNED_BYTE, 0);
+-->
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>10画一个五彩的立方体</title>
+    <script src="../lib/webgl-utils.js"></script>
+    <script src="../lib/webgl-debug.js"></script>
+    <script src="../lib/cuon-utils.js"></script>
+    <script src="../lib/cuon-matrix.js"></script>
+</head>
+
+<body>
+    <canvas id="webgl" width="400" height="400" style="border: 1px solid #000;">你的浏览器不支持WebGL</canvas>
+    <script type="x-shader/x-vertex" id="vertexShader">
+        attribute vec4 a_Position;
+        attribute vec4 a_Color;
+        varying vec4 v_Color;
+        uniform mat4 u_MVPMatrix;
+        void main(){
+            gl_Position = u_MVPMatrix * a_Position;
+            v_Color = a_Color;
+        }
+    </script>
+    <script type="x-shader/x-fragment" id="fragmentShader">
+        precision mediump float;
+            varying vec4 v_Color;
+            void main(){
+                gl_FragColor = v_Color;
+            }
+    </script>
+    <script>
+        let VSHADER_SOURCE = document.getElementById('vertexShader').innerText;
+        let FSHADER_SOURCE = document.getElementById('fragmentShader').innerText;
+        let canvas = document.getElementById('webgl');
+        function main() {
+            let gl = getWebGLContext(canvas);
+            initShaders(gl, VSHADER_SOURCE, FSHADER_SOURCE);
+            const indicesLength = initBuffer(gl);
+            draw(gl, indicesLength);
+        }
+
+        function initBuffer(gl) {
+            //    v6----- v5
+            //   /|      /|
+            //  v1------v0|
+            //  | |     | |
+            //  | |v7---|-|v4
+            //  |/      |/
+            //  v2------v3
+            let verticesColors = new Float32Array([
+                // Vertex coordinates and color
+                1.0, 1.0, 1.0, 1.0, 1.0, 1.0,  // v0 White
+                -1.0, 1.0, 1.0, 1.0, 0.0, 1.0,  // v1 Magenta
+                -1.0, -1.0, 1.0, 1.0, 0.0, 0.0,  // v2 Red
+                1.0, -1.0, 1.0, 1.0, 1.0, 0.0,  // v3 Yellow
+                1.0, -1.0, -1.0, 0.0, 1.0, 0.0,  // v4 Green
+                1.0, 1.0, -1.0, 0.0, 1.0, 1.0,  // v5 Cyan
+                -1.0, 1.0, -1.0, 0.0, 0.0, 1.0,  // v6 Blue
+                -1.0, -1.0, -1.0, 0.0, 0.0, 0.0   // v7 Black
+            ]);
+            // 顶点索引
+            var indices = new Uint8Array([
+                0, 1, 2, 0, 2, 3,    // front
+                0, 3, 4, 0, 4, 5,    // right
+                0, 5, 6, 0, 6, 1,    // up
+                1, 6, 7, 1, 7, 2,    // left
+                7, 4, 3, 7, 3, 2,    // down
+                4, 7, 6, 4, 6, 5     // back
+            ]);
+            const FSIZE = verticesColors.BYTES_PER_ELEMENT;
+
+            const buffer = gl.createBuffer(),
+                indexBuffer = gl.createBuffer();
+            
+            // 对位置颜色缓冲区，做五大步骤 gl.ARRAY_BUFFER
+            gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+            gl.bufferData(gl.ARRAY_BUFFER, verticesColors, gl.STATIC_DRAW);
+            const a_Position = gl.getAttribLocation(gl.program, 'a_Position');
+            gl.vertexAttribPointer(a_Position, 3, gl.FLOAT, false, FSIZE * 6, 0);
+            const a_Color = gl.getAttribLocation(gl.program, 'a_Color');
+            gl.vertexAttribPointer(a_Color, 3, gl.FLOAT, false, FSIZE * 6, FSIZE * 3);
+            gl.enableVertexAttribArray(a_Position);
+            gl.enableVertexAttribArray(a_Color);
+            // 顶点索引缓冲区 bind 和 write data
+            gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
+            gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, indices, gl.STATIC_DRAW);
+
+            // 解绑
+            gl.bindBuffer(gl.ARRAY_BUFFER, null);
+
+            return indices.length;
+        }
+
+        function initModelMatrix(gl) {
+            const modelMatrix = new Matrix4();
+            modelMatrix.setTranslate(0, 0, 0);
+            return modelMatrix;
+        }
+        function initViewMatrix(gl) {
+            const viewMatrix = new Matrix4();
+            viewMatrix.setLookAt(8, 5, 10, -1, -1, -2, 0, 1, 0); // 设置相机
+            return viewMatrix;
+        }
+        function initProjMatrix(gl) {
+            const projMatrix = new Matrix4();
+            projMatrix.setPerspective(30, canvas.width / canvas.height, 1, 100);
+            return projMatrix;
+        }
+        function initMVPMatrix(gl) {
+            const modelMatrix = initModelMatrix(gl),
+                viewMatrix = initViewMatrix(gl),
+                projMatrix = initProjMatrix(gl),
+                u_MVPMatrix = gl.getUniformLocation(gl.program, 'u_MVPMatrix'),
+                mvpMatrix = new Matrix4();
+            // 矩阵运算
+            mvpMatrix.set(projMatrix).multiply(viewMatrix).multiply(modelMatrix);
+            gl.uniformMatrix4fv(u_MVPMatrix, false, mvpMatrix.elements);
+        }
+
+        function draw(gl, n) {
+            initMVPMatrix(gl);
+            gl.clearColor(0.0, 0.0, 0.0, 1.0);
+            gl.enable(gl.DEPTH_TEST);
+            gl.enable(gl.POLYGON_OFFSET_FILL);
+            gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+            gl.polygonOffset(1.0, 1.0); // Set the polygon offset
+
+            gl.drawElements(gl.TRIANGLES, n, gl.UNSIGNED_BYTE, 0);
+        }
+
+        main();
+    </script>
+</body>
+
+</html>

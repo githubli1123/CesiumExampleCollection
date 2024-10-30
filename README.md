@@ -2,7 +2,7 @@
 
 才疏学浅，写的一般。随着自己的不断阅读和学习，文章内容也会不断变更。请批判的看待内容。
 
-🏷️ 10月梳理第三、四章内容。 整理 Cesium 社区的英文文章。
+🏷️ 11月完成内容：地球渲染过程的全过程与细节（涉及到WebGL、三角网格地形、各类算法）、Entity、Primiive。 翻译与批注 Cesium 社区的部分英文文章。
 
 🎯 拜读《3D Engine Design for Virtual Globes》、《实时计算机图形学第2版》，重温《WebGL高级编程》这本书。
 
@@ -761,7 +761,7 @@ Imagery 对象对应的 ImageryLayer 不是全透明的。
 
 Q：在 WebGL中有世界空间、物体局部空间、观察空间、裁剪空间、视口空间，那地球是在世界空间的原点吗？如何定位到地球的 (0,0) 处位置到屏幕中心？难道将 (0,0) 点固定在世界空间的x轴上吗，也就是地球的局部空间上，地球中心点在局部空间原点上，局部空间原点与世界空间原点重合？请在源码中找到依据。
 
-A：得找 globe 的相关的 command 。GlobeSurfaceTileProvider.prototype.endUpdate ==> addDrawCommandsForTile 打断点看 command 到底是啥，然后找到 **_bufferTarget** 属性，猜测应该是保存着 buffer 数据的指针，那就全局搜索这个属性找到所在类，然后打印出来数据，但是是没有数据的，因为写入数据的地方不在 Buffer 类这里，那就打印 command 里的数据，但是看不懂内存查看器。
+A：得找 globe 的相关的 command 。GlobeSurfaceTileProvider.prototype.endUpdate ==> addDrawCommandsForTile（Cesium的渲染都是通过DrawCommand来完成，这一块的理解需要对Render模块有一个认识，所以这里也不打算展开讲。简单的说，主要是VertexArray来绑定VBO（地形数据），通过uniformMap来传递顶点和片元着色器的参数，而通过dayTextures将该Tile对应的多个影响纹理传入到Shader中。摘选自法克鸡丝的博客园文章） 打断点看 command 到底是啥，然后找到 **_bufferTarget** 属性，猜测应该是保存着 buffer 数据的指针，那就全局搜索这个属性找到所在类，然后打印出来数据，但是是没有数据的，因为写入数据的地方不在 Buffer 类这里，那就打印 command 里的数据，但是看不懂内存查看器。
 
 Q：如何将 影像tile 正确地贴到地球上？如果是 WebGL 中的球的话，将球面映射到二维平面，实现纹理贴图。
 
@@ -809,7 +809,7 @@ A：如果对于地球的物体局部空间，地球的
 
 
 
-## 03  从 Cesium 中的 Primitive 出发，到理解 Cesium 渲染架构
+## 03  Cesium 中的 Primitive 
 
 （本章需要整理）
 
@@ -912,7 +912,7 @@ Cesium 使用的多段视椎体技术来将视锥体由远及近切成多个区�
 
 
 
-## 04 从 Cesium 中的 Entity 出发看 
+## 04 从 Cesium 中的 Entity  
 
 
 

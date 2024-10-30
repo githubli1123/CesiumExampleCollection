@@ -1,10 +1,10 @@
 ./cesiumExampleCollection ：Cesium项目简单示例与文档汇总
 	./cesiumExampleCollection/readme.md：Cesium简单示例的使用指南
-	./cesiumExampleCollection/@关于Cesium的文档笔记：Cesium相关的各类文档和笔记
+	./cesiumExampleCollection/@关于Cesium的文档笔记：重要的各类文档和笔记，再次梳理
 
 ./lib：cesium源码备份
 
-./CodeResource&Note - book WebGL Programming Guide：WebGL相关书籍、练习代码与文图总结文档
+./CodeResource&Note - WebGL Programming：WebGL相关书籍、练习代码与文图总结文档
 
 ./Design Patterns Note：设计模式练习代码与文图总结文档
 
@@ -18,4 +18,4 @@
 
 
 
-提醒：本项目包含有各类书籍的资源，数据量很大。
+提醒：本项目包含有各类书籍资源与源码资源，数据量较大。

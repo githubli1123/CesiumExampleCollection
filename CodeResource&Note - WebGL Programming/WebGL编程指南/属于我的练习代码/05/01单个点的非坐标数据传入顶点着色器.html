@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>非坐标数据传入顶点着色器</title>
+    <script src="../lib/webgl-utils.js"></script>
+    <script src="../lib/webgl-debug.js"></script>
+    <script src="../lib/cuon-utils.js"></script>
+    <script src="../lib/cuon-matrix.js"></script>
+</head>
+<body>
+    <canvas id="webgl" width="400" height="400" style="border: 1px solid #000;">你的浏览器不支持WebGL</canvas>
+    <script>
+        let VSHADER_SOURCE = `
+            attribute vec4 a_PointPosition;
+            attribute float a_PointSize;
+            void main(){
+                gl_Position = a_PointPosition;
+                gl_PointSize = a_PointSize;
+            }
+        `;
+        let FSHADER_SOURCE = `
+            precision mediump float;
+            uniform vec4 u_FragColor;
+            void main(){
+                gl_FragColor = u_FragColor;
+            }
+        `
+
+        function main(){
+            let canvas = document.getElementById('webgl');
+            let gl = getWebGLContext(canvas);
+
+            // 初始化着色器
+            initShaders(gl, VSHADER_SOURCE, FSHADER_SOURCE);
+
+            // 传输给顶点着色器数据
+            let a_PointPosition = gl.getAttribLocation(gl.program, 'a_PointPosition');
+            gl.vertexAttrib3f(a_PointPosition, 0.0, 0.0, 0.0);
+            let a_PointSize = gl.getAttribLocation(gl.program, 'a_PointSize');
+            gl.vertexAttrib1f(a_PointSize, 30.0);
+            // 传输给片元着色器数据
+            let u_FragColor = gl.getUniformLocation(gl.program, 'u_FragColor');
+            gl.uniform4f(u_FragColor, 1.0, 0.0, 0.0, 1.0);
+
+            // 绘制前准备工作
+            gl.clearColor(0.0, 0.0, 0.0, 1.0);
+            gl.clear(gl.COLOR_BUFFER_BIT);
+
+            // 绘制
+            gl.drawArrays(gl.POINTS, 0, 1);
+        }
+
+        main();
+
+    </script>
+</body>
+</html>

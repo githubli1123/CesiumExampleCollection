@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>三角形动起来（转不起来）</title>
+    <script src="../lib/webgl-utils.js"></script>
+    <script src="../lib/webgl-debug.js"></script>
+    <script src="../lib/cuon-utils.js"></script>
+    <script src="../lib/cuon-matrix.js"></script>
+</head>
+
+<body>
+    <canvas id="webgl" width="400" height="400" style="border: 1px solid #000;">
+        你的浏览器不支持WebGL
+    </canvas>
+
+    <script>
+        const VSHADER_SOURCE = `
+            attribute vec4 a_Position;
+            uniform mat4 u_ModelMatrix;
+            void main(){
+                gl_Position = u_ModelMatrix * a_Position;
+                gl_PointSize = 10.0;
+            }
+        `;
+        const FSHADER_SOURCE = `
+            precision mediump float;
+            uniform vec4 u_FragColor;
+            void main(){
+                gl_FragColor = u_FragColor;
+            }
+        `;
+        const ANGLE_STEP = 1;
+
+        let gl;
+        function main() {
+            const canvas = document.getElementById('webgl');
+            if (!canvas) {
+                console.log('Failed to retrieve the <canvas> element');
+                return;
+            }
+            gl = getWebGLContext(canvas);
+            if (!gl) {
+                console.log('Failed to get the rendering context for WebGL');
+                return;
+            }
+
+            // 初始化着色器
+            const haveProgram = initShaders(gl, VSHADER_SOURCE, FSHADER_SOURCE);
+            if (!haveProgram) {
+                console.log('Failed to initialize shaders.');
+                return;
+            }
+
+            // 设置顶点位置（使用缓冲区）、变换矩阵
+            const n = initVertexBuffers(gl);
+            const u_ModelMatrix = gl.getUniformLocation(gl.program, 'u_ModelMatrix');
+            let modelMatrix = new Matrix4();
+            let tx = 0.5;
+            // let angle = 90;
+            modelMatrix.translate(tx, 0.0, 0.0);
+            // modelMatrix.setRotate(angle, 0, 0, 1);
+            // modelMatrix.scale(0.5, 0.5, 0.5);
+            gl.uniformMatrix4fv(u_ModelMatrix, false, modelMatrix.elements);
+            
+
+            // 设置图形颜色
+            const u_FragColor = gl.getUniformLocation(gl.program, 'u_FragColor');
+            if (!u_FragColor) {
+                console.log('Failed to get the storage location of u_FragColor');
+                return;
+            }
+            gl.uniform4f(u_FragColor, 0.0, 1.0, 1.0, 1.0);
+
+            // 绘制前准备工作 【beginFrame】
+            gl.clearColor(0.0, 0.0, 0.0, 1.0);
+            gl.clear(gl.COLOR_BUFFER_BIT);
+
+            // 绘制图形
+            gl.drawArrays(gl.TRIANGLES, 0, n);
+            tick(gl, u_ModelMatrix)
+        }
+
+
+        function initVertexBuffers(gl) {
+            const vertices = new Float32Array([
+                0.0, 0.5,
+                -0.5, -0.5,
+                0.5, -0.5
+            ]);
+            const n = 3;
+
+            // 1️⃣ create
+            const vertexBuffer = gl.createBuffer();
+            // 2️⃣ bind
+            gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
+            // 3️⃣ write data
+            gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
+            // 4️⃣ Assign variable
+            const a_Position = gl.getAttribLocation(gl.program, 'a_Position');
+            gl.vertexAttribPointer(a_Position, 2, gl.FLOAT, false, 0, 0);
+            // 5️⃣ enable variable
+            gl.enableVertexAttribArray(a_Position);
+
+            return n;
+        }
+
+        let g_last = new Date();
+        function anmiate(angle){
+            let now = new Date();
+            let elapsed = now - g_last;
+            g_last = now;
+            let newAngle = (90 * elapsed) / 1000;
+            return newAngle % 360;
+        }
+        function rotateAngle(gl, u_ModelMatrix, angle){
+            console.log('1',gl, '2',u_ModelMatrix, '3',angle)
+            let modelMatrix = new Matrix4();
+            modelMatrix.setRotate(angle, 0, 0, 1);
+            gl.uniformMatrix4fv(u_ModelMatrix, false, modelMatrix.elements);
+            return modelMatrix;
+        }
+        function draw(gl, n, u_ModelMatrix, modelMatrix) {
+            gl.clearColor(0.0, 0.0, 0.0, 1.0);
+            gl.clear(gl.COLOR_BUFFER_BIT);
+            gl.drawArrays(gl.TRIANGLES, 0, n);
+        }
+        function tick(gl, u_ModelMatrix){
+            const newAngle = anmiate(g_last);
+
+            const modelMatrix = rotateAngle(gl, u_ModelMatrix, newAngle);
+
+            draw(gl, 3, u_ModelMatrix, modelMatrix);
+
+            requestAnimationFrame(tick);
+        }
+
+        main();
+    </script>
+</body>
+
+</html>
